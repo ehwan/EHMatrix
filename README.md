@@ -14,7 +14,8 @@
 ##Interface
 
 ###Include Header
-    <EHMatrix.h>
+    put EHMatrix folder and EHMatrix.h header file together.
+    #include "EHMatrix.h"
     will automatically include all features
 
 
