@@ -4,7 +4,7 @@
 
 > written in C++14
 
-> _**sample.cpp**_ contains **HOW TO USE**
+> _**sample.cpp**_ contains **Sample code, some functions useful**
 
 
 
