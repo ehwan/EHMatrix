@@ -51,6 +51,13 @@ namespace EH
                 _ehm_inline operator CLS& () { return static_cast< CLS& >( *this ); }
                 _ehm_inline operator const CLS& () const { return static_cast< const CLS& >( *this ); }
 
+
+                template < typename T2 , IndexType M2 , IndexType N2 >
+                _ehm_inline bool has_same_root( const Matrix< T2 , M2 , N2 >* m ) const
+                {
+                    return static_cast< const CLS& >( *this ).has_same_root( m );
+                }
+
                 Expression(){}
                 //template < typename THIS = CLS ,
                            //typename = typename std::enable_if< std::is_same< THIS , Matrix< RET , rows , cols > >::value >
@@ -172,9 +179,13 @@ namespace EH
                     return NegativeTo< CLS >( *this );
                 }
 
-                _ehm_inline auto Transpose() const
+                _ehm_inline auto Transpose()
                 {
                     return TransposeTo< CLS >( *this );
+                }
+                _ehm_inline auto Transpose() const
+                {
+                    return TransposeTo< typename std::add_const< CLS >::type >( *this );
                 }
 
                 _ehm_inline auto Diagonal()

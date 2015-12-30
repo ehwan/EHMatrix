@@ -165,6 +165,11 @@ namespace EH
                     a( _a ) , b( _b )
                 {
                 }
+                template < typename T2 , IndexType M2 , IndexType N2 >
+                _ehm_inline bool has_same_root( const Matrix< T2 , M2 , N2 >* ptr ) const
+                {
+                    return a.has_same_root( ptr ) || b.has_same_root( ptr );
+                }
 
                 _ehm_inline
                 bool
@@ -200,6 +205,11 @@ namespace EH
                 IsLess( auto_creference< TA > _a , auto_creference< TB > _b ) :
                     a( _a ) , b( _b )
                 {
+                }
+                template < typename T2 , IndexType M2 , IndexType N2 >
+                _ehm_inline bool has_same_root( const Matrix< T2 , M2 , N2 >* ptr ) const
+                {
+                    return a.has_same_root( ptr ) || b.has_same_root( ptr );
                 }
 
                 _ehm_inline

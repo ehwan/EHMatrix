@@ -111,6 +111,12 @@ namespace EH
                 {
                 }
 
+                template < typename T2 , IndexType M2 , IndexType N2 >
+                _ehm_inline bool has_same_root( const Matrix< T2 , M2 , N2 >* ptr ) const
+                {
+                    return a.has_same_root( ptr );
+                }
+
                 _ehm_inline TO operator [] ( IndexType i ) const
                 {
                     return static_cast< TO >( GetBy( a , i ) );
@@ -138,6 +144,11 @@ namespace EH
                 {
                 }
 
+                template < typename T2 , IndexType M2 , IndexType N2 >
+                _ehm_inline bool has_same_root( const Matrix< T2 , M2 , N2 >* ptr ) const
+                {
+                    return a.has_same_root( ptr );
+                }
                 _ehm_inline ret_type< TA > operator [] ( IndexType i ) const
                 {
                     return -GetBy( a , i );
@@ -159,26 +170,31 @@ namespace EH
             struct TransposeTo :
                 Expression< TransposeTo< TA > >
             {
-                auto_creference< TA > a;
+                auto_reference< TA > a;
 
-                TransposeTo( auto_creference< TA > _a )
+                TransposeTo( auto_reference< TA > _a )
                     : a( _a )
                 {
                 }
 
-                _ehm_inline ret_type< TA >& operator [] ( IndexType i )
+                template < typename T2 , IndexType M2 , IndexType N2 >
+                _ehm_inline bool has_same_root( const Matrix< T2 , M2 , N2 >* ptr ) const
+                {
+                    return a.has_same_root( ptr );
+                }
+                _ehm_inline auto& operator [] ( IndexType i )
                 {
                     return GetByRef( a , i );
                 }
-                _ehm_inline ret_type< TA >& Get( IndexType x , IndexType y )
+                _ehm_inline auto& Get( IndexType x , IndexType y )
                 {
                     return GetByRef( a , y , x );
                 }
-                _ehm_inline ret_type< TA > operator [] ( IndexType i ) const
+                _ehm_inline auto operator [] ( IndexType i ) const
                 {
                     return GetBy( a , i );
                 }
-                _ehm_inline ret_type< TA > Get( IndexType x , IndexType y ) const
+                _ehm_inline auto Get( IndexType x , IndexType y ) const
                 {
                     return GetBy( a , y , x );
                 }
@@ -209,11 +225,16 @@ namespace EH
                 {
                 }
 
-                _ehm_inline typename std::common_type< ret_type< TA > , ret_type< TB > >::type operator [] ( IndexType i ) const
+                template < typename T2 , IndexType M2 , IndexType N2 >
+                _ehm_inline bool has_same_root( const Matrix< T2 , M2 , N2 >* ptr ) const
+                {
+                    return a.has_same_root( ptr ) || b.has_same_root( ptr );
+                }
+                _ehm_inline auto operator [] ( IndexType i ) const
                 {
                     return GetBy( a , i ) + GetBy( b , i );
                 }
-                _ehm_inline typename std::common_type< ret_type< TA > , ret_type< TB > >::type Get( IndexType x , IndexType y ) const
+                _ehm_inline auto Get( IndexType x , IndexType y ) const
                 {
                     return GetBy( a , x , y ) + GetBy( b , x , y );
                 }
@@ -275,11 +296,16 @@ namespace EH
                 {
                 }
 
-                _ehm_inline typename std::common_type< ret_type< TA > , ret_type< TB > >::type operator [] ( IndexType i ) const
+                template < typename T2 , IndexType M2 , IndexType N2 >
+                _ehm_inline bool has_same_root( const Matrix< T2 , M2 , N2 >* ptr ) const
+                {
+                    return a.has_same_root( ptr ) || b.has_same_root( ptr );
+                }
+                _ehm_inline auto operator [] ( IndexType i ) const
                 {
                     return GetBy( a , i ) * GetBy( b , i );
                 }
-                _ehm_inline typename std::common_type< ret_type< TA > , ret_type< TB > >::type Get( IndexType x , IndexType y ) const
+                _ehm_inline auto Get( IndexType x , IndexType y ) const
                 {
                     return GetBy( a , x , y ) * GetBy( b , x , y );
                 }
@@ -302,11 +328,16 @@ namespace EH
                 {
                 }
 
-                _ehm_inline typename std::common_type< ret_type< TA > , ret_type< TB > >::type operator [] ( IndexType i ) const
+                template < typename T2 , IndexType M2 , IndexType N2 >
+                _ehm_inline bool has_same_root( const Matrix< T2 , M2 , N2 >* ptr ) const
+                {
+                    return a.has_same_root( ptr ) || b.has_same_root( ptr );
+                }
+                _ehm_inline auto operator [] ( IndexType i ) const
                 {
                     return GetBy( a , i ) / GetBy( b , i );
                 }
-                _ehm_inline typename std::common_type< ret_type< TA > , ret_type< TB > >::type Get( IndexType x , IndexType y ) const
+                _ehm_inline auto Get( IndexType x , IndexType y ) const
                 {
                     return GetBy( a , x , y ) / GetBy( b , x , y );
                 }
@@ -332,6 +363,11 @@ namespace EH
                 {
                 }
 
+                template < typename T2 , IndexType M2 , IndexType N2 >
+                _ehm_inline bool has_same_root( const Matrix< T2 , M2 , N2 >* ptr ) const
+                {
+                    return a.has_same_root( ptr ) || b.has_same_root( ptr );
+                }
                 // operator [] can be only used when return is vector;
                 //
                 // temporary template typename for SFINE
@@ -412,6 +448,11 @@ namespace EH
                 {
                 }
 
+                template < typename T2 , IndexType M2 , IndexType N2 >
+                _ehm_inline bool has_same_root( const Matrix< T2 , M2 , N2 >* ptr ) const
+                {
+                    return a.has_same_root( ptr ) || b.has_same_root( ptr ) || c.has_same_root( ptr );
+                }
                 _ehm_inline
                 typename std::common_type< ret_type< TA > , ret_type< TB > , ret_type< TC > >::type
                 operator [] ( IndexType i ) const
@@ -441,6 +482,11 @@ namespace EH
                     a( _a )
                 {
                 }
+                template < typename T2 , IndexType M2 , IndexType N2 >
+                _ehm_inline bool has_same_root( const Matrix< T2 , M2 , N2 >* ptr ) const
+                {
+                    return a.has_same_root( ptr );
+                }
 
                 _ehm_inline auto operator [] ( IndexType i ) const
                 {
@@ -461,6 +507,11 @@ namespace EH
                     a( _a )
                 {
                 }
+                template < typename T2 , IndexType M2 , IndexType N2 >
+                _ehm_inline bool has_same_root( const Matrix< T2 , M2 , N2 >* ptr ) const
+                {
+                    return a.has_same_root( ptr );
+                }
 
                 _ehm_inline auto operator [] ( IndexType i ) const
                 {
@@ -480,6 +531,11 @@ namespace EH
                 RoundExp( auto_creference< TA > _a ) :
                     a( _a )
                 {
+                }
+                template < typename T2 , IndexType M2 , IndexType N2 >
+                _ehm_inline bool has_same_root( const Matrix< T2 , M2 , N2 >* ptr ) const
+                {
+                    return a.has_same_root( ptr );
                 }
 
                 _ehm_inline auto operator [] ( IndexType i ) const
@@ -523,6 +579,11 @@ namespace EH
                 GeneralResize( auto_creference< TA > _a ) :
                     a( _a )
                 {
+                }
+                template < typename T2 , IndexType M2 , IndexType N2 >
+                _ehm_inline bool has_same_root( const Matrix< T2 , M2 , N2 >* ptr ) const
+                {
+                    return a.has_same_root( ptr );
                 }
 
                 template < typename SFINE = TA >
@@ -588,6 +649,11 @@ namespace EH
                     a( _a )
                 {
                 }
+                template < typename T2 , IndexType M2 , IndexType N2 >
+                _ehm_inline bool has_same_root( const Matrix< T2 , M2 , N2 >* ptr ) const
+                {
+                    return a.has_same_root( ptr );
+                }
 
                 _ehm_inline ret_type< TA >& operator [] ( IndexType i )
                 {
@@ -631,6 +697,11 @@ namespace EH
                 SubMatrixExp( auto_reference< TA > _a ) :
                     a( _a )
                 {
+                }
+                template < typename T2 , IndexType M2 , IndexType N2 >
+                _ehm_inline bool has_same_root( const Matrix< T2 , M2 , N2 >* ptr ) const
+                {
+                    return a.has_same_root( ptr );
                 }
 
                 _ehm_inline ret_type< TA >& operator [] ( IndexType i )
@@ -682,6 +753,11 @@ namespace EH
                 {
                 }
 
+                template < typename T2 , IndexType M2 , IndexType N2 >
+                _ehm_inline bool has_same_root( const Matrix< T2 , M2 , N2 >* ptr ) const
+                {
+                    return a.has_same_root( ptr );
+                }
                 _ehm_inline ret_type< TA >& operator [] ( IndexType i )
                 {
                     return GetByRef( a , i + X*Traits< TA >::rows );
@@ -733,6 +809,11 @@ namespace EH
                 ShuffleExp( auto_reference< TA > _a , auto_creference< TB > _b ) :
                     a( _a ) , b( _b )
                 {
+                }
+                template < typename T2 , IndexType M2 , IndexType N2 >
+                _ehm_inline bool has_same_root( const Matrix< T2 , M2 , N2 >* ptr ) const
+                {
+                    return a.has_same_root( ptr ) || b.has_same_root( ptr );
                 }
 
                 _ehm_inline ret_type< TA >& operator [] ( IndexType i )
