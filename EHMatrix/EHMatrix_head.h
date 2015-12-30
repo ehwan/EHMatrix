@@ -5,6 +5,7 @@
 //#include "EHMatrix_container.h"
 #include "EHMatrix_Expression.h"
 //#include "EHMatrix_bitset.h"
+#include "Aliased_container.h"
 
 #include <type_traits>
 #include <initializer_list>
@@ -13,41 +14,6 @@ namespace EH
 {
     namespace Matrix
     {
-        template < typename T , IndexType M , IndexType N >
-        struct Matrix_aliased_container
-        {
-            T s[ N ];
-        };
-        template < typename T >
-        struct Matrix_aliased_container< T , 2 , 1 >
-        {
-            union
-            {
-                T s[ 2 ];
-                struct{ T x; T y; };
-                struct{ T r; T g; };
-            };
-        };
-        template < typename T >
-        struct Matrix_aliased_container< T , 3 , 1 >
-        {
-            union
-            {
-                T s[ 3 ];
-                struct{ T x; T y; T z; };
-                struct{ T r; T g; T b; };
-            };
-        };
-        template < typename T , IndexType M >
-        struct Matrix_aliased_container< T , M , 1 >
-        {
-            union
-            {
-                T s[ 4 ];
-                struct{ T x; T y; T z; T w; };
-                struct{ T r; T g; T b; T a; };
-            };
-        };
         template < typename THIS , IndexType M , IndexType N >
         struct Matrix_Interface
         {
@@ -94,7 +60,7 @@ namespace EH
             }
 
             template < typename EXP_CLS >
-            _ehm_inline void operator = ( const Expression::expression_size_type< EXP_CLS , M , N >& m )
+            _ehm_inline void operator = ( const Expression::Expression< EXP_CLS >& m )
             {
                 static_cast< THIS& >( *this ).Fill_Safe( m );
             }
@@ -150,22 +116,32 @@ namespace EH
                 return Matrix_aliased_container< T , M , N >::s[ y ];
             }
 
+            // default constructor; does nothing
             Matrix(){}
+
+            // copy constructor
             template < typename CLS >
             Matrix( const Expression::expression_size_type< CLS , M , N >& exp )
             {
                 parent::template Fill<CLS>( exp );
             }
+
+            // copy from iterator
             template < typename IterType >
             explicit Matrix( IterType begin , IterType end )
             {
                 parent::Fill( begin , end );
             }
+            // copy from initializer-list
             Matrix( std::initializer_list< T > lst )
             {
                 parent::Fill( lst.begin() , lst.end() );
             }
 
+            // for square-matrix
+            // vector assign
+            // fill diagonal vector with parameter 'v'
+            // else fill 0
             template < typename SFINE = Matrix< T , M , N > , typename CLS ,
                        IndexType M2 = Expression::Traits< SFINE >::rows ,
                        IndexType N2 = Expression::Traits< SFINE >::cols ,
@@ -176,6 +152,8 @@ namespace EH
                 parent::Diagonal().template Fill< CLS >( v );
             }
 
+            // square matrix scalar assign
+            // same as function above
             template < typename SFINE = Matrix< T , M , N > ,
                        IndexType M2 = Expression::Traits< SFINE >::rows ,
                        IndexType N2 = Expression::Traits< SFINE >::cols ,
@@ -185,6 +163,9 @@ namespace EH
                 parent::template Fill< T >( 0 );
                 parent::Diagonal().template Fill< T >( sc );
             }
+
+            // vector scalar assign
+            // fill with given scalar
             template < typename SFINE = Matrix< T , M , N > , typename = void ,
                        IndexType M2 = Expression::Traits< SFINE >::rows ,
                        IndexType N2 = Expression::Traits< SFINE >::cols ,
@@ -206,6 +187,8 @@ namespace EH
                 return false;
             }
 
+            // the memory functions
+            //
             _ehm_inline T* data()
             {
                 return Matrix_aliased_container< T , M , N >::s;

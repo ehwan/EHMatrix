@@ -48,7 +48,7 @@ namespace EH
                     return static_cast< const CLS& >( *this ).Get( x , y );
                 }
 
-                _ehm_inline operator CLS& () { return static_cast< CLS& >( *this ); }
+                _ehm_inline operator       CLS& ()       { return static_cast<       CLS& >( *this ); }
                 _ehm_inline operator const CLS& () const { return static_cast< const CLS& >( *this ); }
 
 
@@ -262,6 +262,8 @@ namespace EH
                 typename std::enable_if< Traits< CLS >::is_gettable || Traits< T >::is_gettable >::type
                 Fill( auto_creference< T > a )
                 {
+                    static_assert( std::is_arithmetic< T >::value || ( Traits< T >::rows == rows && Traits< T >::cols == cols ) ,
+                            "assign invalid size of expression" );
                     for( IndexType i=0; i<cols; ++i )
                     {
                         for( IndexType j=0; j<rows; ++j )
@@ -274,6 +276,8 @@ namespace EH
                 typename std::enable_if< Traits< CLS >::is_gettable==false && Traits< T >::is_gettable==false >::type
                 Fill( auto_creference< T > a )
                 {
+                    static_assert( std::is_arithmetic< T >::value || ( Traits< T >::rows == rows && Traits< T >::cols == cols ) ,
+                            "assign invalid size of expression" );
                     for( IndexType i=0; i<cols*rows; ++i )
                     {
                         GetByRef( *this , i ) = GetBy( a , i );
@@ -295,6 +299,8 @@ namespace EH
                 typename std::enable_if< Traits< CLS >::is_gettable || Traits< T >::is_gettable >::type
                 Multiply( auto_creference< T > a )
                 {
+                    static_assert( std::is_arithmetic< T >::value || ( Traits< T >::rows == rows && Traits< T >::cols == cols ) ,
+                            "Multiply invalid size of expression" );
                     for( IndexType i=0; i<cols; ++i )
                     {
                         for( IndexType j=0; j<rows; ++j )
@@ -307,6 +313,8 @@ namespace EH
                 typename std::enable_if< Traits< CLS >::is_gettable==false && Traits< T >::is_gettable==false >::type
                 Multiply( auto_creference< T > a )
                 {
+                    static_assert( std::is_arithmetic< T >::value || ( Traits< T >::rows == rows && Traits< T >::cols == cols ) ,
+                            "Multiply invalid size of expression" );
                     for( IndexType i=0; i<cols*rows; ++i )
                     {
                         GetByRef( *this , i ) *= GetBy( a , i );
@@ -353,6 +361,8 @@ namespace EH
                 typename std::enable_if< Traits< CLS >::is_gettable || Traits< T >::is_gettable >::type
                 Divide( auto_creference< T > a )
                 {
+                    static_assert( std::is_arithmetic< T >::value || ( Traits< T >::rows == rows && Traits< T >::cols == cols ) ,
+                            "Divide invalid size of expression" );
                     for( IndexType i=0; i<cols; ++i )
                     {
                         for( IndexType j=0; j<rows; ++j )
@@ -365,6 +375,8 @@ namespace EH
                 typename std::enable_if< Traits< CLS >::is_gettable==false && Traits< T >::is_gettable==false >::type
                 Divide( auto_creference< T > a )
                 {
+                    static_assert( std::is_arithmetic< T >::value || ( Traits< T >::rows == rows && Traits< T >::cols == cols ) ,
+                            "Divide invalid size of expression" );
                     for( IndexType i=0; i<cols*rows; ++i )
                     {
                         GetByRef( *this , i ) /= GetBy( a , i );
@@ -412,6 +424,8 @@ namespace EH
                 typename std::enable_if< Traits< CLS >::is_gettable || Traits< T >::is_gettable >::type
                 Plus( auto_creference< T > a )
                 {
+                    static_assert( std::is_arithmetic< T >::value || ( Traits< T >::rows == rows && Traits< T >::cols == cols ) ,
+                            "Plus invalid size of expression" );
                     for( IndexType i=0; i<cols; ++i )
                     {
                         for( IndexType j=0; j<rows; ++j )
@@ -424,6 +438,8 @@ namespace EH
                 typename std::enable_if< Traits< CLS >::is_gettable==false && Traits< T >::is_gettable==false >::type
                 Plus( auto_creference< T > a )
                 {
+                    static_assert( std::is_arithmetic< T >::value || ( Traits< T >::rows == rows && Traits< T >::cols == cols ) ,
+                            "Plus invalid size of expression" );
                     for( IndexType i=0; i<cols*rows; ++i )
                     {
                         GetByRef( *this , i ) += GetBy( a , i );
@@ -470,6 +486,8 @@ namespace EH
                 typename std::enable_if< Traits< CLS >::is_gettable || Traits< T >::is_gettable >::type
                 Minus( auto_creference< T > a )
                 {
+                    static_assert( std::is_arithmetic< T >::value || ( Traits< T >::rows == rows && Traits< T >::cols == cols ) ,
+                            "Minus invalid size of expression" );
                     for( IndexType i=0; i<cols; ++i )
                     {
                         for( IndexType j=0; j<rows; ++j )
@@ -482,6 +500,8 @@ namespace EH
                 typename std::enable_if< Traits< CLS >::is_gettable==false && Traits< T >::is_gettable==false >::type
                 Minus( auto_creference< T > a )
                 {
+                    static_assert( std::is_arithmetic< T >::value || ( Traits< T >::rows == rows && Traits< T >::cols == cols ) ,
+                            "Minus invalid size of expression" );
                     for( IndexType i=0; i<cols*rows; ++i )
                     {
                         GetByRef( *this , i ) -= GetBy( a , i );
