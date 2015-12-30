@@ -13,6 +13,41 @@ namespace EH
 {
     namespace Matrix
     {
+        template < typename T , IndexType M , IndexType N >
+        struct Matrix_aliased_container
+        {
+            T s[ N ];
+        };
+        template < typename T >
+        struct Matrix_aliased_container< T , 2 , 1 >
+        {
+            union
+            {
+                T s[ 2 ];
+                struct{ T x; T y; };
+                struct{ T r; T g; };
+            };
+        };
+        template < typename T >
+        struct Matrix_aliased_container< T , 3 , 1 >
+        {
+            union
+            {
+                T s[ 3 ];
+                struct{ T x; T y; T z; };
+                struct{ T r; T g; T b; };
+            };
+        };
+        template < typename T , IndexType M >
+        struct Matrix_aliased_container< T , M , 1 >
+        {
+            union
+            {
+                T s[ 4 ];
+                struct{ T x; T y; T z; T w; };
+                struct{ T r; T g; T b; T a; };
+            };
+        };
         template < typename THIS , IndexType M , IndexType N >
         struct Matrix_Interface
         {
@@ -93,27 +128,26 @@ namespace EH
         };
         template < typename T , IndexType M , IndexType N >
         struct Matrix :
+            Matrix_aliased_container< T , M , N > ,
             Expression::Expression< Matrix< T , M , N > >
         {
             typedef Expression::Expression< Matrix< T , M , N > > parent;
 
-            T s[ M * N ];
-
             _ehm_inline T& operator [] ( IndexType i )
             {
-                return s[ i ];
+                return Matrix_aliased_container< T , M , N >::s[ i ];
             }
             _ehm_inline T& Get( IndexType x , IndexType y )
             {
-                return s[ y + x*M ];
+                return Matrix_aliased_container< T , M , N >::s[ y ];
             }
             _ehm_inline T operator [] ( IndexType i ) const
             {
-                return s[ i ];
+                return Matrix_aliased_container< T , M , N >::s[ i ];
             }
             _ehm_inline T Get( IndexType x , IndexType y ) const
             {
-                return s[ y + x*M ];
+                return Matrix_aliased_container< T , M , N >::s[ y ];
             }
 
             Matrix(){}
@@ -132,6 +166,34 @@ namespace EH
                 parent::Fill( lst.begin() , lst.end() );
             }
 
+            template < typename SFINE = Matrix< T , M , N > , typename CLS ,
+                       IndexType M2 = Expression::Traits< SFINE >::rows ,
+                       IndexType N2 = Expression::Traits< SFINE >::cols ,
+                       typename = typename std::enable_if< M2==N2 >::type >
+            Matrix( const Expression::expression_size_type< CLS , M , 1 >& v )
+            {
+                parent::template Fill< T >( 0 );
+                parent::Diagonal().template Fill< CLS >( v );
+            }
+
+            template < typename SFINE = Matrix< T , M , N > ,
+                       IndexType M2 = Expression::Traits< SFINE >::rows ,
+                       IndexType N2 = Expression::Traits< SFINE >::cols ,
+                       typename = typename std::enable_if< M2==N2 >::type >
+            Matrix( const T sc )
+            {
+                parent::template Fill< T >( 0 );
+                parent::Diagonal().template Fill< T >( sc );
+            }
+            template < typename SFINE = Matrix< T , M , N > , typename = void ,
+                       IndexType M2 = Expression::Traits< SFINE >::rows ,
+                       IndexType N2 = Expression::Traits< SFINE >::cols ,
+                       typename = typename std::enable_if< N2==1 >::type >
+            Matrix( const T sc )
+            {
+                parent::template Fill< T >( sc );
+            }
+
             EXPRESSION_ASSIGN_OPERATOR( parent )
 
             _ehm_inline bool has_same_root( const Matrix< T , M , N >* ptr ) const
@@ -146,35 +208,35 @@ namespace EH
 
             _ehm_inline T* data()
             {
-                return s;
+                return Matrix_aliased_container< T , M , N >::s;
             }
             _ehm_inline const T* data() const
             {
-                return s;
+                return Matrix_aliased_container< T , M , N >::s;
             }
             _ehm_inline T* begin()
             {
-                return s;
+                return Matrix_aliased_container< T , M , N >::s;
             }
             _ehm_inline T* end()
             {
-                return s + M*N;
+                return Matrix_aliased_container< T , M , N >::s + M*N;
             }
             _ehm_inline T* begin() const
             {
-                return s;
+                return Matrix_aliased_container< T , M , N >::s;
             }
             _ehm_inline T* end() const
             {
-                return s + M*N;
+                return Matrix_aliased_container< T , M , N >::s + M*N;
             }
             _ehm_inline T* cbegin() const
             {
-                return s;
+                return Matrix_aliased_container< T , M , N >::s;
             }
             _ehm_inline T* cend() const
             {
-                return s + M*N;
+                return Matrix_aliased_container< T , M , N >::s + M*N;
             }
         };
 
