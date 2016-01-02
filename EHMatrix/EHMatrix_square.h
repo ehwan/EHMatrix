@@ -16,11 +16,11 @@ namespace EH
 
             _ehm_inline void operator *= ( const T a )
             {
-                static_cast< THIS& >( *this ).template Multiply< T >( a );
+                static_cast< THIS& >( *this ).Multiply( a );
             }
             _ehm_inline void operator /= ( const T a )
             {
-                static_cast< THIS& >( *this ).template Divide< T >( a );
+                static_cast< THIS& >( *this ).Divide( a );
             }
 
             template < typename CLS >
@@ -41,14 +41,14 @@ namespace EH
             }
             template < typename LST_TYPE >
             _ehm_inline
-            typename std::enable_if< std::is_convertible< LST_TYPE , T >::value >::type
+            void
             operator += ( std::initializer_list< LST_TYPE > lst )
             {
                 static_cast< THIS& >( *this ).Plus( lst.begin() , lst.end() );
             }
             template < typename LST_TYPE >
             _ehm_inline
-            typename std::enable_if< std::is_convertible< LST_TYPE , T >::value >::type
+            void
             operator -= ( std::initializer_list< LST_TYPE > lst )
             {
                 static_cast< THIS& >( *this ).Minus( lst.begin() , lst.end() );
@@ -66,11 +66,11 @@ namespace EH
             }
             _ehm_inline void operator += ( const T a )
             {
-                static_cast< THIS& >( *this ).Diagonal().template Plus< T >( a );
+                static_cast< THIS& >( *this ).Diagonal().Plus( a );
             }
             _ehm_inline void operator -= ( const T a )
             {
-                static_cast< THIS& >( *this ).Diagonal().template Minus< T >( a );
+                static_cast< THIS& >( *this ).Diagonal().Minus( a );
             }
 
 
@@ -81,7 +81,7 @@ namespace EH
             }
             template < typename LST_TYPE >
             _ehm_inline
-            typename std::enable_if< std::is_convertible< LST_TYPE , T >::value >::type
+            void
             operator = ( std::initializer_list< LST_TYPE > lst )
             {
                 static_cast< THIS& >( *this ).Fill( lst.begin() , lst.end() );
@@ -89,15 +89,15 @@ namespace EH
             template < typename EXP_CLS , typename = void >
             _ehm_inline void operator = ( const Expression::expression_size_type< EXP_CLS , N , 1 >& m )
             {
-                static_cast< THIS& >( *this ).template Fill< T >( 0 );
+                static_cast< THIS& >( *this ).Fill( 0 );
                 static_cast< THIS& >( *this ).Diagonal() = m;
             }
             template < typename SCALAR_TYPE >
             _ehm_inline
-            typename std::enable_if< std::is_convertible< SCALAR_TYPE , T >::value >::type
+            typename std::enable_if< Expression::is_scalar< SCALAR_TYPE >::value >::type
             operator = ( const SCALAR_TYPE a )
             {
-                static_cast< THIS& >( *this ).template Fill< T >( 0 );
+                static_cast< THIS& >( *this ).Fill( 0 );
                 static_cast< THIS& >( *this ).Diagonal() = a;
             }
 

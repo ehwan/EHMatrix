@@ -18,30 +18,12 @@
 #define _ehm_inline inline
 #endif
 
-#define EXPRESSION_ASSIGN_EXPRESSION(parent_type) \
-    template < typename EXP_CLS >\
-    _ehm_inline void operator = ( const EH::Matrix::Expression::Expression< EXP_CLS >& m )\
-    {\
-        parent_type::operator = ( m );\
-    }
-#define EXPRESSION_ASSIGN_LST(parent_type) \
-    template < typename LST_TYPE >\
-    _ehm_inline void operator = ( std::initializer_list< LST_TYPE > lst )\
-    {\
-        parent_type::operator = ( lst );\
-    }
-#define EXPRESSION_ASSIGN_SCALAR(parent_type) \
-    template < typename SCALAR_TYPE >\
-    _ehm_inline \
-    typename std::enable_if< std::is_arithmetic< SCALAR_TYPE >::value >::type\
-    operator = ( const SCALAR_TYPE _scalar_ )\
-    {\
-        parent_type::operator = ( _scalar_ );\
-    }
 #define EXPRESSION_ASSIGN_OPERATOR(parent_type) \
-    EXPRESSION_ASSIGN_EXPRESSION(parent_type) \
-    EXPRESSION_ASSIGN_LST(parent_type) \
-    EXPRESSION_ASSIGN_SCALAR(parent_type)
+    template < typename ASSIGN_TYPE >\
+    _ehm_inline void operator = ( ASSIGN_TYPE&& exp )\
+    {\
+        parent_type::operator = ( std::template forward< ASSIGN_TYPE >( exp ) );\
+    }
 
 namespace EH
 {

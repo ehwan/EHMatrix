@@ -21,11 +21,11 @@ namespace EH
 
             _ehm_inline void operator *= ( const T a )
             {
-                static_cast< THIS& >( *this ).template Multiply< T >( a );
+                static_cast< THIS& >( *this ).Multiply( a );
             }
             _ehm_inline void operator /= ( const T a )
             {
-                static_cast< THIS& >( *this ).template Divide< T >( a );
+                static_cast< THIS& >( *this ).Divide( a );
             }
 
             template < typename CLS >
@@ -46,14 +46,14 @@ namespace EH
             }
             template < typename LST_TYPE >
             _ehm_inline
-            typename std::enable_if< std::is_convertible< LST_TYPE , T >::value >::type
+            void
             operator += ( std::initializer_list< LST_TYPE > lst )
             {
                 static_cast< THIS& >( *this ).Plus( lst.begin() , lst.end() );
             }
             template < typename LST_TYPE >
             _ehm_inline
-            typename std::enable_if< std::is_convertible< LST_TYPE , T >::value >::type
+            void
             operator -= ( std::initializer_list< LST_TYPE > lst )
             {
                 static_cast< THIS& >( *this ).Minus( lst.begin() , lst.end() );
@@ -66,7 +66,7 @@ namespace EH
             }
             template < typename LST_TYPE >
             _ehm_inline
-            typename std::enable_if< std::is_convertible< LST_TYPE , T >::value >::type
+            void
             operator = ( std::initializer_list< LST_TYPE > lst )
             {
                 static_cast< THIS& >( *this ).Fill( lst.begin() , lst.end() );
@@ -119,7 +119,7 @@ namespace EH
             template < typename CLS >
             Matrix( const Expression::expression_size_type< CLS , M , N >& exp )
             {
-                parent::template Fill<CLS>( exp );
+                parent::Fill( exp );
             }
 
             template < typename T0 , typename ... Ts >
@@ -150,8 +150,8 @@ namespace EH
                        typename = typename std::enable_if< M2==N2 >::type >
             Matrix( const Expression::expression_size_type< CLS , M , 1 >& v )
             {
-                parent::template Fill< T >( 0 );
-                parent::Diagonal().template Fill< CLS >( v );
+                parent::Fill( 0 );
+                parent::Diagonal().Fill( v );
             }
 
             // square matrix scalar assign
@@ -162,8 +162,8 @@ namespace EH
                        typename = typename std::enable_if< M2==N2 >::type >
             Matrix( const T sc )
             {
-                parent::template Fill< T >( 0 );
-                parent::Diagonal().template Fill< T >( sc );
+                parent::Fill( 0 );
+                parent::Diagonal().Fill( sc );
             }
 
             // vector scalar assign
@@ -174,7 +174,7 @@ namespace EH
                        typename = typename std::enable_if< N2==1 >::type >
             Matrix( const T sc )
             {
-                parent::template Fill< T >( sc );
+                parent::Fill( sc );
             }
 
             EXPRESSION_ASSIGN_OPERATOR( parent )

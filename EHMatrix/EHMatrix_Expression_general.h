@@ -24,10 +24,9 @@ namespace EH
 
                 template < typename TA >
                 using temp_type = typename std::conditional<
-                                        (Traits< TA >::is_restrict==false || Traits< CLS >::is_restrict==false) &&
-                                        Traits< TA >::template has_same_root< typename Traits< CLS >::root_type >::value ,
-                                        Matrix< ret_type< TA > , Traits< TA >::rows , Traits< TA >::cols > ,
-                                        TA
+                                        AssignShouldMakeTemp< CLS , TA >::value ,
+                                        Matrix< RET , rows , cols > ,
+                                        typename std::add_const< typename std::add_lvalue_reference< remove_cr<TA> >::type >::type
                                     >::type;
 
 
@@ -214,13 +213,12 @@ namespace EH
 
                 // fill with given iterator
                 // gettable
-                template < typename IterType >
-                typename std::enable_if<
-                    std::is_convertible< typename std::iterator_traits< IterType >::value_type , RET >::value &&
-                    Traits< CLS >::is_gettable
-                >::type
+                template < typename IterType , typename SFINE = CLS >
+                typename std::enable_if< Traits< SFINE >::is_gettable >::type
                 Fill( IterType begin , IterType end )
                 {
+                    static_assert( std::is_convertible< typename std::iterator_traits< IterType >::value_type , RET >::value ,
+                            "invalid type of iterator assign" );
                     assert( std::distance( begin , end ) == rows*cols );
                     for( IndexType i=0; i<cols; ++i )
                     {
@@ -232,13 +230,12 @@ namespace EH
                 }
                 // fill with given iterator
                 // non-gettable
-                template < typename IterType >
-                typename std::enable_if<
-                    std::is_convertible< typename std::iterator_traits< IterType >::value_type , RET >::value &&
-                    Traits< CLS >::is_gettable==false
-                >::type
+                template < typename IterType , typename SFINE = CLS >
+                typename std::enable_if< Traits< SFINE >::is_gettable==false >::type
                 Fill( IterType begin , IterType end )
                 {
+                    static_assert( std::is_convertible< typename std::iterator_traits< IterType >::value_type , RET >::value ,
+                            "invalid type of iterator assign" );
                     assert( std::distance( begin , end ) == rows*cols );
                     for( IndexType i=0; i<cols*rows; ++i )
                     {
@@ -260,9 +257,9 @@ namespace EH
 
                 template < typename T >
                 typename std::enable_if< Traits< CLS >::is_gettable || Traits< T >::is_gettable >::type
-                Fill( auto_creference< T > a )
+                Fill( T&& a )
                 {
-                    static_assert( std::is_arithmetic< T >::value || ( Traits< T >::rows == rows && Traits< T >::cols == cols ) ,
+                    static_assert( is_scalar< T >::value || ( Traits< T >::rows == rows && Traits< T >::cols == cols ) ,
                             "assign invalid size of expression" );
                     for( IndexType i=0; i<cols; ++i )
                     {
@@ -274,9 +271,9 @@ namespace EH
                 }
                 template < typename T >
                 typename std::enable_if< Traits< CLS >::is_gettable==false && Traits< T >::is_gettable==false >::type
-                Fill( auto_creference< T > a )
+                Fill( T&& a )
                 {
-                    static_assert( std::is_arithmetic< T >::value || ( Traits< T >::rows == rows && Traits< T >::cols == cols ) ,
+                    static_assert( is_scalar< T >::value || ( Traits< T >::rows == rows && Traits< T >::cols == cols ) ,
                             "assign invalid size of expression" );
                     for( IndexType i=0; i<cols*rows; ++i )
                     {
@@ -286,26 +283,16 @@ namespace EH
                 template < typename T >
                 _ehm_inline
                 void
-                Fill_Safe( const Expression< T >& exp )
+                Fill_Safe( T&& exp )
                 {
-                    Fill< temp_type< T > >( exp );
-                    //Fill< typename Expression< T >::temp_type >( exp );
+                    Fill( temp_type< T >( exp ) );
                 }
 
                 template < IndexType OFFSET = 0 , typename T0 , typename ... Ts >
                 typename std::enable_if<
-                    std::is_arithmetic< T0 >::value && is_column_vector< CLS >::value
+                    is_column_vector< T0 >::value && is_column_vector< CLS >::value
                 >::type
-                FillAggressive( const T0 a , Ts&& ... args )
-                {
-                    GetByRef( *this , 0 , OFFSET ) = a;
-                    FillAggressive< OFFSET + 1 >( std::template forward< Ts >( args )... );
-                }
-                template < IndexType OFFSET = 0 , typename T0 , typename ... Ts >
-                typename std::enable_if<
-                    std::is_arithmetic< T0 >::value==false && is_column_vector< T0 >::value && is_column_vector< CLS >::value
-                >::type
-                FillAggressive( const Expression< T0 >& a , Ts&& ... args )
+                FillAggressive( T0&& a , Ts&& ... args )
                 {
                     for( IndexType i=0; i<(Traits< T0 >::rows); ++i )
                     {
@@ -324,9 +311,9 @@ namespace EH
                 // same as Fill()
                 template < typename T >
                 typename std::enable_if< Traits< CLS >::is_gettable || Traits< T >::is_gettable >::type
-                Multiply( auto_creference< T > a )
+                Multiply( T&& a )
                 {
-                    static_assert( std::is_arithmetic< T >::value || ( Traits< T >::rows == rows && Traits< T >::cols == cols ) ,
+                    static_assert( is_scalar< T >::value || ( Traits< T >::rows == rows && Traits< T >::cols == cols ) ,
                             "Multiply invalid size of expression" );
                     for( IndexType i=0; i<cols; ++i )
                     {
@@ -338,22 +325,21 @@ namespace EH
                 }
                 template < typename T >
                 typename std::enable_if< Traits< CLS >::is_gettable==false && Traits< T >::is_gettable==false >::type
-                Multiply( auto_creference< T > a )
+                Multiply( T&& a )
                 {
-                    static_assert( std::is_arithmetic< T >::value || ( Traits< T >::rows == rows && Traits< T >::cols == cols ) ,
+                    static_assert( is_scalar< T >::value || ( Traits< T >::rows == rows && Traits< T >::cols == cols ) ,
                             "Multiply invalid size of expression" );
                     for( IndexType i=0; i<cols*rows; ++i )
                     {
                         GetByRef( *this , i ) *= GetBy( a , i );
                     }
                 }
-                template < typename IterType >
-                typename std::enable_if<
-                    std::is_convertible< typename std::iterator_traits< IterType >::value_type , RET >::value &&
-                    Traits< CLS >::is_gettable
-                >::type
+                template < typename IterType , typename SFINE = CLS >
+                typename std::enable_if< Traits< SFINE >::is_gettable >::type
                 Multiply( IterType begin , IterType end )
                 {
+                    static_assert( std::is_convertible< typename std::iterator_traits< IterType >::value_type , RET >::value ,
+                            "invalid type of iterator multiply" );
                     assert( std::distance( begin , end ) == rows*cols );
                     for( IndexType i=0; i<cols; ++i )
                     {
@@ -363,13 +349,12 @@ namespace EH
                         }
                     }
                 }
-                template < typename IterType >
-                typename std::enable_if<
-                    std::is_convertible< typename std::iterator_traits< IterType >::value_type , RET >::value &&
-                    Traits< CLS >::is_gettable==false
-                >::type
+                template < typename IterType , typename SFINE = CLS >
+                typename std::enable_if< Traits< SFINE >::is_gettable==false >::type
                 Multiply( IterType begin , IterType end )
                 {
+                    static_assert( std::is_convertible< typename std::iterator_traits< IterType >::value_type , RET >::value ,
+                            "invalid type of iterator multiply" );
                     assert( std::distance( begin , end ) == rows*cols );
                     for( IndexType i=0; i<cols*rows; ++i )
                     {
@@ -378,17 +363,17 @@ namespace EH
                 }
                 template < typename T >
                 _ehm_inline
-                void
-                Multiply_Safe( const Expression< T >& exp )
+                typename std::enable_if< AssignShouldMakeTemp< CLS , T >::value >::type
+                Multiply_Safe( T&& exp )
                 {
-                    Multiply< temp_type< T > >( exp );
+                    Multiply( mat_type< T >( exp ) );
                 }
 
                 template < typename T >
                 typename std::enable_if< Traits< CLS >::is_gettable || Traits< T >::is_gettable >::type
-                Divide( auto_creference< T > a )
+                Divide( T&& a )
                 {
-                    static_assert( std::is_arithmetic< T >::value || ( Traits< T >::rows == rows && Traits< T >::cols == cols ) ,
+                    static_assert( is_scalar< T >::value || ( Traits< T >::rows == rows && Traits< T >::cols == cols ) ,
                             "Divide invalid size of expression" );
                     for( IndexType i=0; i<cols; ++i )
                     {
@@ -400,22 +385,21 @@ namespace EH
                 }
                 template < typename T >
                 typename std::enable_if< Traits< CLS >::is_gettable==false && Traits< T >::is_gettable==false >::type
-                Divide( auto_creference< T > a )
+                Divide( T&& a )
                 {
-                    static_assert( std::is_arithmetic< T >::value || ( Traits< T >::rows == rows && Traits< T >::cols == cols ) ,
+                    static_assert( is_scalar< T >::value || ( Traits< T >::rows == rows && Traits< T >::cols == cols ) ,
                             "Divide invalid size of expression" );
                     for( IndexType i=0; i<cols*rows; ++i )
                     {
                         GetByRef( *this , i ) /= GetBy( a , i );
                     }
                 }
-                template < typename IterType >
-                typename std::enable_if<
-                    std::is_convertible< typename std::iterator_traits< IterType >::value_type , RET >::value &&
-                    Traits< CLS >::is_gettable
-                >::type
+                template < typename IterType , typename SFINE = CLS >
+                typename std::enable_if< Traits< SFINE >::is_gettable >::type
                 Divide( IterType begin , IterType end )
                 {
+                    static_assert( std::is_convertible< typename std::iterator_traits< IterType >::value_type , RET >::value ,
+                            "invalid type of iterator divide" );
                     assert( std::distance( begin , end ) == rows*cols );
                     for( IndexType i=0; i<cols; ++i )
                     {
@@ -425,13 +409,12 @@ namespace EH
                         }
                     }
                 }
-                template < typename IterType >
-                typename std::enable_if<
-                    std::is_convertible< typename std::iterator_traits< IterType >::value_type , RET >::value &&
-                    Traits< CLS >::is_gettable==false
-                >::type
+                template < typename IterType , typename SFINE = CLS >
+                typename std::enable_if< Traits< SFINE >::is_gettable == false >::type
                 Divide( IterType begin , IterType end )
                 {
+                    static_assert( std::is_convertible< typename std::iterator_traits< IterType >::value_type , RET >::value ,
+                            "invalid type of iterator divide" );
                     assert( std::distance( begin , end ) == rows*cols );
                     for( IndexType i=0; i<cols*rows; ++i )
                     {
@@ -441,17 +424,17 @@ namespace EH
                 template < typename T >
                 _ehm_inline
                 void
-                Divide_Safe( const Expression< T >& exp )
+                Divide_Safe( T&& exp )
                 {
-                    Divide< temp_type< T > >( exp );
+                    Divide( temp_type< T >( exp ) );
                 }
 
                 // and plus-assign , minus-assign
                 template < typename T >
                 typename std::enable_if< Traits< CLS >::is_gettable || Traits< T >::is_gettable >::type
-                Plus( auto_creference< T > a )
+                Plus( T&& a )
                 {
-                    static_assert( std::is_arithmetic< T >::value || ( Traits< T >::rows == rows && Traits< T >::cols == cols ) ,
+                    static_assert( is_scalar< T >::value || ( Traits< T >::rows == rows && Traits< T >::cols == cols ) ,
                             "Plus invalid size of expression" );
                     for( IndexType i=0; i<cols; ++i )
                     {
@@ -463,22 +446,21 @@ namespace EH
                 }
                 template < typename T >
                 typename std::enable_if< Traits< CLS >::is_gettable==false && Traits< T >::is_gettable==false >::type
-                Plus( auto_creference< T > a )
+                Plus( T&& a )
                 {
-                    static_assert( std::is_arithmetic< T >::value || ( Traits< T >::rows == rows && Traits< T >::cols == cols ) ,
+                    static_assert( is_scalar< T >::value || ( Traits< T >::rows == rows && Traits< T >::cols == cols ) ,
                             "Plus invalid size of expression" );
                     for( IndexType i=0; i<cols*rows; ++i )
                     {
                         GetByRef( *this , i ) += GetBy( a , i );
                     }
                 }
-                template < typename IterType >
-                typename std::enable_if<
-                    std::is_convertible< typename std::iterator_traits< IterType >::value_type , RET >::value &&
-                    Traits< CLS >::is_gettable
-                >::type
+                template < typename IterType , typename SFINE = CLS >
+                typename std::enable_if< Traits< SFINE >::is_gettable >::type
                 Plus( IterType begin , IterType end )
                 {
+                    static_assert( std::is_convertible< typename std::iterator_traits< IterType >::value_type , RET >::value ,
+                            "invalid type of iterator plus" );
                     assert( std::distance( begin , end ) == rows*cols );
                     for( IndexType i=0; i<cols; ++i )
                     {
@@ -488,13 +470,12 @@ namespace EH
                         }
                     }
                 }
-                template < typename IterType >
-                typename std::enable_if<
-                    std::is_convertible< typename std::iterator_traits< IterType >::value_type , RET >::value &&
-                    Traits< CLS >::is_gettable==false
-                >::type
+                template < typename IterType , typename SFINE = CLS >
+                typename std::enable_if< Traits< SFINE >::is_gettable == false >::type
                 Plus( IterType begin , IterType end )
                 {
+                    static_assert( std::is_convertible< typename std::iterator_traits< IterType >::value_type , RET >::value ,
+                            "invalid type of iterator plus" );
                     assert( std::distance( begin , end ) == rows*cols );
                     for( IndexType i=0; i<cols*rows; ++i )
                     {
@@ -504,16 +485,16 @@ namespace EH
                 template < typename T >
                 _ehm_inline
                 void
-                Plus_Safe( const Expression< T >& exp )
+                Plus_Safe( T&& exp )
                 {
-                    Plus< temp_type< T > >( exp );
+                    Plus( temp_type< T >( exp ) );
                 }
 
                 template < typename T >
                 typename std::enable_if< Traits< CLS >::is_gettable || Traits< T >::is_gettable >::type
-                Minus( auto_creference< T > a )
+                Minus( T&& a )
                 {
-                    static_assert( std::is_arithmetic< T >::value || ( Traits< T >::rows == rows && Traits< T >::cols == cols ) ,
+                    static_assert( is_scalar< T >::value || ( Traits< T >::rows == rows && Traits< T >::cols == cols ) ,
                             "Minus invalid size of expression" );
                     for( IndexType i=0; i<cols; ++i )
                     {
@@ -525,22 +506,21 @@ namespace EH
                 }
                 template < typename T >
                 typename std::enable_if< Traits< CLS >::is_gettable==false && Traits< T >::is_gettable==false >::type
-                Minus( auto_creference< T > a )
+                Minus( T&& a )
                 {
-                    static_assert( std::is_arithmetic< T >::value || ( Traits< T >::rows == rows && Traits< T >::cols == cols ) ,
+                    static_assert( is_scalar< T >::value || ( Traits< T >::rows == rows && Traits< T >::cols == cols ) ,
                             "Minus invalid size of expression" );
                     for( IndexType i=0; i<cols*rows; ++i )
                     {
                         GetByRef( *this , i ) -= GetBy( a , i );
                     }
                 }
-                template < typename IterType >
-                typename std::enable_if<
-                    std::is_convertible< typename std::iterator_traits< IterType >::value_type , RET >::value &&
-                    Traits< CLS >::is_gettable
-                >::type
+                template < typename IterType , typename SFINE = CLS >
+                typename std::enable_if< Traits< SFINE >::is_gettable >::type
                 Minus( IterType begin , IterType end )
                 {
+                    static_assert( std::is_convertible< typename std::iterator_traits< IterType >::value_type , RET >::value ,
+                            "invalid type of iterator minus" );
                     assert( std::distance( begin , end ) == rows*cols );
                     for( IndexType i=0; i<cols; ++i )
                     {
@@ -550,13 +530,12 @@ namespace EH
                         }
                     }
                 }
-                template < typename IterType >
-                typename std::enable_if<
-                    std::is_convertible< typename std::iterator_traits< IterType >::value_type , RET >::value &&
-                    Traits< CLS >::is_gettable==false
-                >::type
+                template < typename IterType , typename SFINE = CLS >
+                typename std::enable_if< Traits< SFINE >::is_gettable == false >::type
                 Minus( IterType begin , IterType end )
                 {
+                    static_assert( std::is_convertible< typename std::iterator_traits< IterType >::value_type , RET >::value ,
+                            "invalid type of iterator minus" );
                     assert( std::distance( begin , end ) == rows*cols );
                     for( IndexType i=0; i<cols*rows; ++i )
                     {
@@ -566,9 +545,9 @@ namespace EH
                 template < typename T >
                 _ehm_inline
                 void
-                Minus_Safe( const Expression< T >& exp )
+                Minus_Safe( T&& exp )
                 {
-                    Minus< temp_type< T > >( exp );
+                    Minus( temp_type< T >( exp ) );
                 }
 
                 // simply forwarding assign operator from interface

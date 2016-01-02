@@ -47,6 +47,14 @@ namespace EH
             struct Traits< CLS const& > : Traits< CLS >
             {
             };
+            template < typename CLS >
+            struct Traits< CLS const&& > : Traits< CLS >
+            {
+            };
+            template < typename CLS >
+            struct Traits< CLS&& > : Traits< CLS >
+            {
+            };
 
             template < typename CLS >
             struct Traits< Expression< CLS > > : Traits< CLS >
@@ -317,6 +325,16 @@ namespace EH
                 constexpr const static bool is_restrict = value ? true : Traits< CLS >::is_restrict;
 
                 constexpr const static int operations = value ? 0 : Traits< CLS >::operations;
+            };
+            template < typename TA , typename TB >
+            struct AssignShouldMakeTemp
+            {
+                constexpr const static bool value = ( Traits< TA >::is_restrict  == false || Traits< TB >::is_restrict == false ) &&
+                                                      Traits< TB >::template has_same_root< typename Traits< TA >::root_type >::value;
+            };
+            template < typename T >
+            struct is_scalar : std::is_arithmetic< remove_cr< T > >
+            {
             };
         };  // namespace Expression
     };  // namespace Matrix
