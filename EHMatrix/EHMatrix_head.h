@@ -122,8 +122,14 @@ namespace EH
                 parent::template Fill<CLS>( exp );
             }
 
+            template < typename T0 , typename ... Ts >
+            explicit Matrix( T0&& arg0 , Ts&& ... args )
+            {
+                parent::FillAggressive( std::template forward< T0 >( arg0 ) , std::template forward< Ts >( args )... );
+            }
+
             // copy from iterator
-            template < typename IterType >
+            template < typename IterType , typename = typename std::iterator_traits< IterType >::value_type >
             explicit Matrix( IterType begin , IterType end )
             {
                 parent::Fill( begin , end );

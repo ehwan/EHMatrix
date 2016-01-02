@@ -45,12 +45,22 @@ int main()
 
     // vector3 type;
     vec< float , 3 > v1 = { 0 , 1 , 2 };
+    v1.Log();
     vec< float , 3 > v3 = { 0 , 2 , 1 };
+    v3.Log();
 
-    std::cout << v1.has_same_root( v3 ) << v1.has_same_root( v1 );
+    // only for vector;
+    // aggressive assign;
+    vec< float , 5 > v5( v1 , 5.0f , 6.0f );
+    v5.Log();
+    v5.FillAggressive( 7.0f , v3 , 8.0f );
+    v5.Log();
 
+    // EXP::has_same_root( matrix_type )
+    // returns true if Expression
+    // contains expression of matrix_type
     auto exp = (( v1 * v3 + 2 ) / v3);
-    std::cout << exp.has_same_root( v1 );
+    std::cout << exp.has_same_root( v1 );   // should returns true for v1 & v3
 
     // general matrix multiply;
     // ( 2x3 multipy 3x2 = 2x2 )

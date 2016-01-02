@@ -292,6 +292,33 @@ namespace EH
                     //Fill< typename Expression< T >::temp_type >( exp );
                 }
 
+                template < IndexType OFFSET = 0 , typename T0 , typename ... Ts >
+                typename std::enable_if<
+                    std::is_arithmetic< T0 >::value && is_column_vector< CLS >::value
+                >::type
+                FillAggressive( const T0 a , Ts&& ... args )
+                {
+                    GetByRef( *this , 0 , OFFSET ) = a;
+                    FillAggressive< OFFSET + 1 >( std::template forward< Ts >( args )... );
+                }
+                template < IndexType OFFSET = 0 , typename T0 , typename ... Ts >
+                typename std::enable_if<
+                    std::is_arithmetic< T0 >::value==false && is_column_vector< T0 >::value && is_column_vector< CLS >::value
+                >::type
+                FillAggressive( const Expression< T0 >& a , Ts&& ... args )
+                {
+                    for( IndexType i=0; i<(Traits< T0 >::rows); ++i )
+                    {
+                        GetByRef( *this , 0 , OFFSET + i ) = GetBy( a , 0 , i );
+                    }
+                    FillAggressive< OFFSET + (Traits< T0 >::rows) >( std::template forward< Ts >( args )... );
+                }
+                template < IndexType OFFSET = 0 >
+                _ehm_inline void FillAggressive()
+                {
+                    static_assert( OFFSET == rows , "Invalid size for aggresive assignment" );
+                }
+
 
                 // multiply , divide
                 // same as Fill()

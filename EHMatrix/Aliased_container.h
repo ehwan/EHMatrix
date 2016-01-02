@@ -34,7 +34,7 @@ namespace EH
         {
             union
             {
-                T s[ 4 ];
+                T s[ M ];
                 struct{ T x; T y; T z; T w; };
                 struct{ T r; T g; T b; T a; };
             };
