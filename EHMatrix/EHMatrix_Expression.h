@@ -112,9 +112,9 @@ namespace EH
                 }
 
                 template < typename T2 , IndexType M2 , IndexType N2 >
-                _ehm_inline bool has_same_root( const Matrix< T2 , M2 , N2 >* ptr ) const
+                constexpr _ehm_inline bool has_same_root( const Matrix< T2 , M2 , N2 >& ptr ) const
                 {
-                    return a.has_same_root( ptr );
+                    return HasSameRoot( a , ptr );
                 }
 
                 _ehm_inline TO operator [] ( IndexType i ) const
@@ -145,9 +145,9 @@ namespace EH
                 }
 
                 template < typename T2 , IndexType M2 , IndexType N2 >
-                _ehm_inline bool has_same_root( const Matrix< T2 , M2 , N2 >* ptr ) const
+                constexpr _ehm_inline bool has_same_root( const Matrix< T2 , M2 , N2 >& ptr ) const
                 {
-                    return a.has_same_root( ptr );
+                    return HasSameRoot( a , ptr );
                 }
                 _ehm_inline ret_type< TA > operator [] ( IndexType i ) const
                 {
@@ -178,9 +178,9 @@ namespace EH
                 }
 
                 template < typename T2 , IndexType M2 , IndexType N2 >
-                _ehm_inline bool has_same_root( const Matrix< T2 , M2 , N2 >* ptr ) const
+                constexpr _ehm_inline bool has_same_root( const Matrix< T2 , M2 , N2 >& ptr ) const
                 {
-                    return a.has_same_root( ptr );
+                    return HasSameRoot( a , ptr );
                 }
                 _ehm_inline auto& operator [] ( IndexType i )
                 {
@@ -226,9 +226,9 @@ namespace EH
                 }
 
                 template < typename T2 , IndexType M2 , IndexType N2 >
-                _ehm_inline bool has_same_root( const Matrix< T2 , M2 , N2 >* ptr ) const
+                constexpr _ehm_inline bool has_same_root( const Matrix< T2 , M2 , N2 >& ptr ) const
                 {
-                    return a.has_same_root( ptr ) || b.has_same_root( ptr );
+                    return HasSameRoot( a , ptr ) || HasSameRoot( b , ptr );
                 }
                 _ehm_inline auto operator [] ( IndexType i ) const
                 {
@@ -297,9 +297,9 @@ namespace EH
                 }
 
                 template < typename T2 , IndexType M2 , IndexType N2 >
-                _ehm_inline bool has_same_root( const Matrix< T2 , M2 , N2 >* ptr ) const
+                constexpr _ehm_inline bool has_same_root( const Matrix< T2 , M2 , N2 >& ptr ) const
                 {
-                    return a.has_same_root( ptr ) || b.has_same_root( ptr );
+                    return HasSameRoot( a , ptr ) || HasSameRoot( b , ptr );
                 }
                 _ehm_inline auto operator [] ( IndexType i ) const
                 {
@@ -329,9 +329,9 @@ namespace EH
                 }
 
                 template < typename T2 , IndexType M2 , IndexType N2 >
-                _ehm_inline bool has_same_root( const Matrix< T2 , M2 , N2 >* ptr ) const
+                constexpr _ehm_inline bool has_same_root( const Matrix< T2 , M2 , N2 >& ptr ) const
                 {
-                    return a.has_same_root( ptr ) || b.has_same_root( ptr );
+                    return HasSameRoot( a , ptr ) || HasSameRoot( b , ptr );
                 }
                 _ehm_inline auto operator [] ( IndexType i ) const
                 {
@@ -364,9 +364,9 @@ namespace EH
                 }
 
                 template < typename T2 , IndexType M2 , IndexType N2 >
-                _ehm_inline bool has_same_root( const Matrix< T2 , M2 , N2 >* ptr ) const
+                constexpr _ehm_inline bool has_same_root( const Matrix< T2 , M2 , N2 >& ptr ) const
                 {
-                    return a.has_same_root( ptr ) || b.has_same_root( ptr );
+                    return HasSameRoot( a , ptr ) || HasSameRoot( b , ptr );
                 }
                 // operator [] can be only used when return is vector;
                 //
@@ -449,9 +449,9 @@ namespace EH
                 }
 
                 template < typename T2 , IndexType M2 , IndexType N2 >
-                _ehm_inline bool has_same_root( const Matrix< T2 , M2 , N2 >* ptr ) const
+                constexpr _ehm_inline bool has_same_root( const Matrix< T2 , M2 , N2 >& ptr ) const
                 {
-                    return a.has_same_root( ptr ) || b.has_same_root( ptr ) || c.has_same_root( ptr );
+                    return HasSameRoot( a , ptr ) || HasSameRoot( b , ptr ) || HasSameRoot( c , ptr );
                 }
                 _ehm_inline
                 typename std::common_type< ret_type< TA > , ret_type< TB > , ret_type< TC > >::type
@@ -483,9 +483,9 @@ namespace EH
                 {
                 }
                 template < typename T2 , IndexType M2 , IndexType N2 >
-                _ehm_inline bool has_same_root( const Matrix< T2 , M2 , N2 >* ptr ) const
+                constexpr _ehm_inline bool has_same_root( const Matrix< T2 , M2 , N2 >& ptr ) const
                 {
-                    return a.has_same_root( ptr );
+                    return HasSameRoot( a , ptr );
                 }
 
                 _ehm_inline auto operator [] ( IndexType i ) const
@@ -508,9 +508,9 @@ namespace EH
                 {
                 }
                 template < typename T2 , IndexType M2 , IndexType N2 >
-                _ehm_inline bool has_same_root( const Matrix< T2 , M2 , N2 >* ptr ) const
+                constexpr _ehm_inline bool has_same_root( const Matrix< T2 , M2 , N2 >& ptr ) const
                 {
-                    return a.has_same_root( ptr );
+                    return HasSameRoot( a , ptr );
                 }
 
                 _ehm_inline auto operator [] ( IndexType i ) const
@@ -533,9 +533,9 @@ namespace EH
                 {
                 }
                 template < typename T2 , IndexType M2 , IndexType N2 >
-                _ehm_inline bool has_same_root( const Matrix< T2 , M2 , N2 >* ptr ) const
+                constexpr _ehm_inline bool has_same_root( const Matrix< T2 , M2 , N2 >& ptr ) const
                 {
-                    return a.has_same_root( ptr );
+                    return HasSameRoot( a , ptr );
                 }
 
                 _ehm_inline auto operator [] ( IndexType i ) const
@@ -581,9 +581,9 @@ namespace EH
                 {
                 }
                 template < typename T2 , IndexType M2 , IndexType N2 >
-                _ehm_inline bool has_same_root( const Matrix< T2 , M2 , N2 >* ptr ) const
+                constexpr _ehm_inline bool has_same_root( const Matrix< T2 , M2 , N2 >& ptr ) const
                 {
-                    return a.has_same_root( ptr );
+                    return HasSameRoot( a , ptr );
                 }
 
                 template < typename SFINE = TA >
@@ -650,9 +650,9 @@ namespace EH
                 {
                 }
                 template < typename T2 , IndexType M2 , IndexType N2 >
-                _ehm_inline bool has_same_root( const Matrix< T2 , M2 , N2 >* ptr ) const
+                constexpr _ehm_inline bool has_same_root( const Matrix< T2 , M2 , N2 >& ptr ) const
                 {
-                    return a.has_same_root( ptr );
+                    return HasSameRoot( a , ptr );
                 }
 
                 _ehm_inline ret_type< TA >& operator [] ( IndexType i )
@@ -699,9 +699,9 @@ namespace EH
                 {
                 }
                 template < typename T2 , IndexType M2 , IndexType N2 >
-                _ehm_inline bool has_same_root( const Matrix< T2 , M2 , N2 >* ptr ) const
+                constexpr _ehm_inline bool has_same_root( const Matrix< T2 , M2 , N2 >& ptr ) const
                 {
-                    return a.has_same_root( ptr );
+                    return HasSameRoot( a , ptr );
                 }
 
                 _ehm_inline ret_type< TA >& operator [] ( IndexType i )
@@ -754,9 +754,9 @@ namespace EH
                 }
 
                 template < typename T2 , IndexType M2 , IndexType N2 >
-                _ehm_inline bool has_same_root( const Matrix< T2 , M2 , N2 >* ptr ) const
+                constexpr _ehm_inline bool has_same_root( const Matrix< T2 , M2 , N2 >& ptr ) const
                 {
-                    return a.has_same_root( ptr );
+                    return HasSameRoot( a , ptr );
                 }
                 _ehm_inline ret_type< TA >& operator [] ( IndexType i )
                 {
@@ -811,9 +811,9 @@ namespace EH
                 {
                 }
                 template < typename T2 , IndexType M2 , IndexType N2 >
-                _ehm_inline bool has_same_root( const Matrix< T2 , M2 , N2 >* ptr ) const
+                constexpr _ehm_inline bool has_same_root( const Matrix< T2 , M2 , N2 >& ptr ) const
                 {
-                    return a.has_same_root( ptr ) || b.has_same_root( ptr );
+                    return HasSameRoot( a , ptr ) || HasSameRoot( b , ptr );
                 }
 
                 _ehm_inline ret_type< TA >& operator [] ( IndexType i )

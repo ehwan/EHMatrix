@@ -53,7 +53,7 @@ namespace EH
 
 
                 template < typename T2 , IndexType M2 , IndexType N2 >
-                _ehm_inline bool has_same_root( const Matrix< T2 , M2 , N2 >* m ) const
+                constexpr _ehm_inline bool has_same_root( const Matrix< T2 , M2 , N2 >& m ) const
                 {
                     return static_cast< const CLS& >( *this ).has_same_root( m );
                 }

@@ -47,6 +47,11 @@ int main()
     vec< float , 3 > v1 = { 0 , 1 , 2 };
     vec< float , 3 > v3 = { 0 , 2 , 1 };
 
+    std::cout << v1.has_same_root( v3 ) << v1.has_same_root( v1 );
+
+    auto exp = (( v1 * v3 + 2 ) / v3);
+    std::cout << exp.has_same_root( v1 );
+
     // general matrix multiply;
     // ( 2x3 multipy 3x2 = 2x2 )
     // the Transpose() function.

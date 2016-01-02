@@ -205,6 +205,11 @@ namespace EH
                     a( _a ) , b( _b )
                 {
                 }
+                template < typename T2 , IndexType M2 , IndexType N2 >
+                constexpr _ehm_inline bool has_same_root( const Matrix< T2 , M2 , N2 >& ptr ) const
+                {
+                    return HasSameRoot( a , ptr ) || HasSameRoot( b , ptr );
+                }
 
                 _ehm_inline ret_type< TA > operator [] ( IndexType i ) const
                 {

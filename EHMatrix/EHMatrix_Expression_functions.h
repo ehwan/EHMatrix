@@ -221,17 +221,17 @@ namespace EH
                 return m[i];
             }
             template < typename CLS ,
-                     typename = typename std::enable_if<
-                         Traits< CLS >::is_gettable == false
-                         >::type >
+                       typename = typename std::enable_if<
+                            Traits< CLS >::is_gettable == false
+                       >::type >
             constexpr _ehm_inline static ret_type< CLS > GetBy( const Expression< CLS >& m , IndexType x , IndexType y )
             {
                 return m[ y + x * Traits< CLS >::rows ];
             }
             template < typename CLS , typename = void ,
-                     typename = typename std::enable_if<
-                         Traits< CLS >::is_gettable == true
-                         >::type >
+                       typename = typename std::enable_if<
+                            Traits< CLS >::is_gettable == true
+                       >::type >
             constexpr _ehm_inline static ret_type< CLS > GetBy( const Expression< CLS >& m , IndexType x , IndexType y )
             {
                 return m.Get( x , y );
@@ -243,20 +243,52 @@ namespace EH
                 return m[i];
             }
             template < typename CLS , typename = void ,
-                     typename = typename std::enable_if<
-                         Traits< CLS >::is_gettable == false
-                         >::type >
+                       typename = typename std::enable_if<
+                            Traits< CLS >::is_gettable == false
+                       >::type >
             constexpr _ehm_inline static ret_type< CLS >& GetByRef( Expression< CLS >& m , IndexType x , IndexType y )
             {
                 return m[ y + x * Traits< CLS >::rows ];
             }
             template < typename CLS , typename = void , typename = void ,
-                     typename = typename std::enable_if<
-                         Traits< CLS >::is_gettable == true
-                         >::type >
+                       typename = typename std::enable_if<
+                            Traits< CLS >::is_gettable == true
+                       >::type >
             constexpr _ehm_inline static ret_type< CLS >& GetByRef( Expression< CLS >& m , IndexType x , IndexType y )
             {
                 return m.Get( x , y );
+            }
+
+            template < typename CLS , IndexType M , IndexType N , typename T >
+            constexpr
+            _ehm_inline
+            typename std::enable_if<
+                Traits< CLS >::template has_same_root< Matrix< T , M , N > >::value ,
+                bool
+            >::type
+            HasSameRoot( const Expression< CLS >& m , const Matrix< T , M , N >& ptr )
+            {
+                return m.has_same_root( ptr );
+            }
+            template < typename CLS , IndexType M , IndexType N , typename T >
+            constexpr
+            _ehm_inline
+            typename std::enable_if<
+                Traits< CLS >::template has_same_root< Matrix< T , M , N > >::value == false ,
+                bool
+            >::type
+            HasSameRoot( const Expression< CLS >& m , const Matrix< T , M , N >& ptr )
+            {
+                return false;
+            }
+            template < typename SCALAR ,
+                       IndexType M , IndexType N , typename T >
+            constexpr
+            _ehm_inline
+            typename std::enable_if< std::is_arithmetic< SCALAR >::value , bool >::type
+            HasSameRoot( SCALAR m , const Matrix< T , M , N >& ptr )
+            {
+                return false;
             }
 
 

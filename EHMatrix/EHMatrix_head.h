@@ -173,12 +173,16 @@ namespace EH
 
             EXPRESSION_ASSIGN_OPERATOR( parent )
 
-            _ehm_inline bool has_same_root( const Matrix< T , M , N >* ptr ) const
+            constexpr
+            _ehm_inline
+            bool has_same_root( const Matrix< T , M , N >& ptr ) const
             {
-                return this == ptr;
+                return this == &ptr;
             }
             template < typename T2 , IndexType M2 , IndexType N2 >
-            _ehm_inline bool has_same_root( const Matrix< T2 , M2 , N2 >* ptr ) const
+            constexpr
+            _ehm_inline
+            bool has_same_root( const Matrix< T2 , M2 , N2 >& ptr ) const
             {
                 return false;
             }
