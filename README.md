@@ -10,6 +10,34 @@
 
 
 
+##Simple Usage
+    typedef EH::Matrix::Matrix< float , 4 , 4 > mat4;
+    typedef EH::Matrix::Matrix< float , 3 >     mat3;
+    typedef EH::Matrix::Matrix< float , 4 , 1 > vec4;
+    typedef EH::Matrix::Vector< float , 2 , 1 > vec2;
+
+
+    vec2 v1 = { 0.0f , 1.0f };
+    // it is column-major
+    mat3 m1 =
+    {
+        0.0f , 1.0f , 2.0f , // not a row
+        1.0f , 2.0f , 3.0f ,
+        3.0f , 4.0f , 5.0f
+    };
+
+    // returns proxy class
+    m1.Diagonal() = { 0.0f , 1.0f , 2.0f };
+
+
+    // aggressive-assign
+    // same as vec4( 0.0f , 0.0f , 1.0f , 3.0f )
+    vec4 v2 = vec4( 0.0f , v1 , 3.0f );
+
+
+
+
+
 
 ##Interface
 

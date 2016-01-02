@@ -130,7 +130,7 @@ int main()
     // matrix - matrix compare;
     // matrix - scalar compare;
     //
-    // will return bool vector, bool matrix
+    // will return bool vector( expression )
     // all() , any() , none() functions
     // can be converted into std::bitset , bool
     // operator bool() will call all() function
