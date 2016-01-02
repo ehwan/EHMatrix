@@ -7,7 +7,7 @@ namespace EH
         template < typename T , IndexType M , IndexType N >
         struct Matrix_aliased_container
         {
-            T s[ N ];
+            T s[ M*N ];
         };
         template < typename T >
         struct Matrix_aliased_container< T , 2 , 1 >
