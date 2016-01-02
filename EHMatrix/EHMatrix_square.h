@@ -103,22 +103,18 @@ namespace EH
 
             void Log() const
             {
-                /*
                 using Expression::GetBy;
-                using EH::LOG::LOG;
-                using EH::LOG::LOGR;
-                LOG( "Matrix Log" );
+                std::cout << "Matrix Log" << '\n';
                 for( IndexType m=0; m<N; ++m )
                 {
-                    LOGR( "(\t" );
+                    std::cout << "(\t" ;
                     for( IndexType n=0; n<N; ++n )
                     {
-                        LOGR( GetBy( static_cast< const THIS& >( *this ) , n , m ) );
-                        if( n!=N-1 ){ LOGR( " , " ); }
+                        std::cout << GetBy( static_cast< const THIS& >( *this ) , n , m );
+                        if( n!=N-1 ){ std::cout << " , "; }
                     }
-                    LOGR( "\t)\n");
+                    std::cout << "\t))\n";
                 }
-                */
             }
         };
 

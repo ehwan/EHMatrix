@@ -148,18 +148,14 @@ namespace EH
 
             void Log() const
             {
-                /*
                 using Expression::GetBy;
-                using EH::LOG::LOG;
-                using EH::LOG::LOGR;
-                LOG( "Vector Log" );
+                std::cout << "Vector Log\n";
                 for( IndexType m=0; m<M; ++m )
                 {
-                    LOGR( "(\t" );
-                    LOGR( GetBy( static_cast< const THIS& >( *this ) , 0 , m ) );
-                    LOGR( "\t)\n" );
+                    std::cout << "(\t";
+                    std::cout << GetBy( static_cast< const THIS& >( *this ) , 0 , m );
+                    std::cout << "\t)\n";
                 }
-                */
             }
         };
 
