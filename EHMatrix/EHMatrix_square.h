@@ -26,18 +26,18 @@ namespace EH
             template < typename CLS >
             void operator *= ( const Expression::expression_size_type< CLS , N , N >& m )
             {
-                static_cast< THIS& >( *this ).Fill_Safe( static_cast< const THIS& >(*this) * m );
+                static_cast< THIS& >( *this ).Fill( Expression::mat_type< THIS >( static_cast< const THIS& >( *this ) * m ) );
             }
 
             template < typename CLS >
             _ehm_inline void operator += ( const Expression::expression_size_type< CLS , N , N >& exp )
             {
-                static_cast< THIS& >( *this ).Plus_Safe( exp );
+                static_cast< THIS& >( *this ).Plus( typename Expression::AssignShouldMakeTemp< THIS , CLS >::type( exp ) );
             }
             template < typename CLS >
             _ehm_inline void operator -= ( const Expression::expression_size_type< CLS , N , N >& exp )
             {
-                static_cast< THIS& >( *this ).Minus_Safe( exp );
+                static_cast< THIS& >( *this ).Minus( typename Expression::AssignShouldMakeTemp< THIS , CLS >::type( exp ) );
             }
             template < typename LST_TYPE >
             _ehm_inline
@@ -57,12 +57,12 @@ namespace EH
             template < typename CLS , typename = void >
             _ehm_inline void operator += ( const Expression::expression_size_type< CLS , N , 1 >& v )
             {
-                static_cast< THIS& >( *this ).Diagonal(). Plus_Safe( v );
+                static_cast< THIS& >( *this ).Diagonal().Plus( typename Expression::AssignShouldMakeTemp< THIS , CLS >::type( v ) );
             }
             template < typename CLS , typename = void >
             _ehm_inline void operator -= ( const Expression::expression_size_type< CLS , N , 1 >& v )
             {
-                static_cast< THIS& >( *this ).Diagonal().Minus_Safe( v );
+                static_cast< THIS& >( *this ).Diagonal().Minus( typename Expression::AssignShouldMakeTemp< THIS , CLS >::type( v ) );
             }
             _ehm_inline void operator += ( const T a )
             {
@@ -77,7 +77,7 @@ namespace EH
             template < typename EXP_CLS >
             _ehm_inline void operator = ( const Expression::expression_size_type< EXP_CLS , N , N >& m )
             {
-                static_cast< THIS& >( *this ).Fill_Safe( m );
+                static_cast< THIS& >( *this ).Fill( typename Expression::AssignShouldMakeTemp< THIS , EXP_CLS >::type( m ) );
             }
             template < typename LST_TYPE >
             _ehm_inline

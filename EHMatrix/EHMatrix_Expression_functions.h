@@ -326,11 +326,17 @@ namespace EH
 
                 constexpr const static int operations = value ? 0 : Traits< CLS >::operations;
             };
-            template < typename TA , typename TB >
+            template < typename DST , typename SRC >
             struct AssignShouldMakeTemp
             {
-                constexpr const static bool value = ( Traits< TA >::is_restrict  == false || Traits< TB >::is_restrict == false ) &&
-                                                      Traits< TB >::template has_same_root< typename Traits< TA >::root_type >::value;
+                constexpr const static bool value = ( Traits< DST >::is_restrict  == false || Traits< SRC >::is_restrict == false ) &&
+                                                      Traits< SRC >::template has_same_root< typename Traits< DST >::root_type >::value;
+
+                typedef typename std::conditional<
+                            value ,
+                            Matrix< typename Traits< SRC >::return_type , Traits< SRC >::rows , Traits< SRC >::cols > ,
+                            typename std::add_const< typename std::add_lvalue_reference< remove_cr< SRC > >::type >::type
+                            >::type type;
             };
             template < typename T >
             struct is_scalar : std::is_arithmetic< remove_cr< T > >

@@ -249,9 +249,7 @@ namespace EH
                 //
                 // fill with given expression;
                 // DOES NOT MAKE TEMP OBJECT
-                // -> be sure, it may accidently overwrite on the memory
-                //
-                // or use *_Safe functions to make( or not by it's attributes ) temp object
+                // -> be sure, it may accidently overwrite on the memory ( if later one is part of former one )
                 //
                 // has versions of gettable & non-gettable for performance;
 
@@ -280,20 +278,11 @@ namespace EH
                         GetByRef( *this , i ) = GetBy( a , i );
                     }
                 }
-                template < typename T >
-                _ehm_inline
-                void
-                Fill_Safe( T&& exp )
-                {
-                    Fill( temp_type< T >( exp ) );
-                }
 
                 template < IndexType OFFSET = 0 , typename T0 , typename ... Ts >
-                typename std::enable_if<
-                    is_column_vector< T0 >::value && is_column_vector< CLS >::value
-                >::type
-                FillAggressive( T0&& a , Ts&& ... args )
+                void FillAggressive( T0&& a , Ts&& ... args )
                 {
+                    static_assert( is_column_vector< T0 >::value , "only vector can perform aggressive-assignment" );
                     for( IndexType i=0; i<(Traits< T0 >::rows); ++i )
                     {
                         GetByRef( *this , 0 , OFFSET + i ) = GetBy( a , 0 , i );
@@ -303,6 +292,7 @@ namespace EH
                 template < IndexType OFFSET = 0 >
                 _ehm_inline void FillAggressive()
                 {
+                    static_assert( is_column_vector< CLS >::value , "only vector can perform aggressive-assignment" );
                     static_assert( OFFSET == rows , "Invalid size for aggresive assignment" );
                 }
 
@@ -361,13 +351,6 @@ namespace EH
                         GetByRef( *this , i ) *= *( begin++ );
                     }
                 }
-                template < typename T >
-                _ehm_inline
-                typename std::enable_if< AssignShouldMakeTemp< CLS , T >::value >::type
-                Multiply_Safe( T&& exp )
-                {
-                    Multiply( mat_type< T >( exp ) );
-                }
 
                 template < typename T >
                 typename std::enable_if< Traits< CLS >::is_gettable || Traits< T >::is_gettable >::type
@@ -420,13 +403,6 @@ namespace EH
                     {
                         GetByRef( *this , i ) /= *( begin++ );
                     }
-                }
-                template < typename T >
-                _ehm_inline
-                void
-                Divide_Safe( T&& exp )
-                {
-                    Divide( temp_type< T >( exp ) );
                 }
 
                 // and plus-assign , minus-assign
@@ -482,13 +458,6 @@ namespace EH
                         GetByRef( *this , i ) += *( begin++ );
                     }
                 }
-                template < typename T >
-                _ehm_inline
-                void
-                Plus_Safe( T&& exp )
-                {
-                    Plus( temp_type< T >( exp ) );
-                }
 
                 template < typename T >
                 typename std::enable_if< Traits< CLS >::is_gettable || Traits< T >::is_gettable >::type
@@ -541,13 +510,6 @@ namespace EH
                     {
                         GetByRef( *this , i ) -= *( begin++ );
                     }
-                }
-                template < typename T >
-                _ehm_inline
-                void
-                Minus_Safe( T&& exp )
-                {
-                    Minus( temp_type< T >( exp ) );
                 }
 
                 // simply forwarding assign operator from interface
