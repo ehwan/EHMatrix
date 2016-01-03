@@ -230,6 +230,15 @@ namespace EH
             };
         };  // namespace Expression
 
+        template < typename TA >
+        typename std::enable_if< Expression::Traits< TA >::rows == 2 && Expression::Traits< TA >::cols == 2 ,
+                 typename Expression::Traits< TA >::return_type >::type
+        Det( const Expression::Expression< TA >& exp )
+        {
+            using Expression::GetBy;
+            return GetBy( exp , 0 , 0 )*GetBy( exp , 1 , 1 ) - GetBy( exp , 0 , 1 )*GetBy( exp , 1 , 0 );
+        }
+
     };  // namespace Matrix
 
 };  //namespace E
