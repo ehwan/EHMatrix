@@ -49,12 +49,19 @@ int main()
     vec< float , 3 > v3 = { 0 , 2 , 1 };
     v3.Log();
 
-    // only for vector;
     // aggressive assign;
     vec< float , 5 > v5( v1 , 5.0f , 6.0f );
     v5.Log();
     v5.FillAggressive( 7.0f , v3 , 8.0f );
     v5.Log();
+
+    vec< float , 2 > vv1( 0 , 0 );
+    vec< float , 2 > vv2( 1 , 1 );
+    vec< float , 2 > vv3( 2 , 2 );
+    // aggressive assign for matrix;
+    // each components must fill whole COLUMN
+    mat< float , 2 , 3 > mm1( vv1 , vv2 , vv3 );
+    mm1.Log();
 
     // EXP::has_same_root( matrix_type )
     // returns true if Expression

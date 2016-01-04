@@ -239,6 +239,23 @@ namespace EH
             return GetBy( exp , 0 , 0 )*GetBy( exp , 1 , 1 ) - GetBy( exp , 0 , 1 )*GetBy( exp , 1 , 0 );
         }
 
+        template < typename TA >
+        typename std::enable_if< Expression::Traits< TA >::rows == 2 && Expression::Traits< TA >::cols == 2 ,
+                 Expression::mat_type< TA > >::type
+        Inverse( const Expression::Expression< TA >& exp )
+        {
+            using Expression::GetBy;
+            typename Expression::ShouldMakeTemp< TA , 2 >::type temp( exp );
+            const decltype( Det( exp ) ) invD = 1 / Det( temp );
+
+            return Expression::mat_type< TA >
+            {
+            {
+                invD * GetBy( temp , 1 , 1 ) , -invD * GetBy( temp , 0 , 1 ) , -invD * GetBy( temp , 1 , 0 ) , invD * GetBy( temp , 0 , 0 )
+            }
+            };
+        }
+
     };  // namespace Matrix
 
 };  //namespace E

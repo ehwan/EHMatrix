@@ -2,6 +2,7 @@
 
 #include "EHMatrix_Global.h"
 #include "EHMatrix_Expression.h"
+#include <utility>
 
 namespace EH
 {
@@ -279,21 +280,40 @@ namespace EH
                     }
                 }
 
-                template < IndexType OFFSET = 0 , typename T0 , typename ... Ts >
-                void FillAggressive( T0&& a , Ts&& ... args )
+                template < IndexType OFFSET = 0 , IndexType MAX = rows , typename SFINE = CLS , typename T0 , typename ... Ts >
+                typename std::enable_if< is_column_vector< SFINE >::value >::type
+                FillAggressive( T0&& a , Ts&& ... args )
                 {
                     static_assert( is_column_vector< T0 >::value , "only vector can perform aggressive-assignment" );
-                    for( IndexType i=0; i<(Traits< T0 >::rows); ++i )
+
+                    constexpr const IndexType _ROWS = Traits< T0 >::rows;
+                    for( IndexType i=0; i<_ROWS; ++i )
                     {
                         GetByRef( *this , 0 , OFFSET + i ) = GetBy( a , 0 , i );
                     }
-                    FillAggressive< OFFSET + (Traits< T0 >::rows) >( std::template forward< Ts >( args )... );
+                    FillAggressive< OFFSET + _ROWS , MAX >( std::template forward< Ts >( args )... );
                 }
-                template < IndexType OFFSET = 0 >
+                template < IndexType OFFSET = 0 , IndexType MAX = cols , typename SFINE = CLS , typename T0 , typename ... Ts >
+                typename std::enable_if< is_column_vector< SFINE >::value == false >::type
+                FillAggressive( T0&& a , Ts&& ... args )
+                {
+                    static_assert( Traits< T0 >::rows == rows , "invalid row size for non-vector aggresive assign" );
+
+                    constexpr const IndexType _COLS = Traits< T0 >::cols;
+
+                    for( IndexType x=0; x<_COLS; ++x )
+                    {
+                        for( IndexType i=0; i<rows; ++i )
+                        {
+                            GetByRef( *this , OFFSET+x , i ) = GetBy( a , x , i );
+                        }
+                    }
+                    FillAggressive< OFFSET + _COLS , MAX >( std::template forward< Ts >( args )... );
+                }
+                template < IndexType OFFSET = 0 , IndexType MAX >
                 _ehm_inline void FillAggressive()
                 {
-                    static_assert( is_column_vector< CLS >::value , "only vector can perform aggressive-assignment" );
-                    static_assert( OFFSET == rows , "Invalid size for aggresive assignment" );
+                    static_assert( OFFSET == MAX , "Invalid size for aggresive assignment" );
                 }
 
 
