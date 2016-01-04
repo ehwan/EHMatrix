@@ -76,7 +76,7 @@ namespace EH
             {
                 using Expression::GetBy;
                 std::cout << "Matrix Log" << '\n';
-                for( IndexType m=0; m<N; ++m )
+                for( IndexType m=0; m<M; ++m )
                 {
                     std::cout << "(\t" ;
                     for( IndexType n=0; n<N; ++n )
