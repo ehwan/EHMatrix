@@ -26,30 +26,28 @@ namespace EH
             template < typename CLS >
             void operator *= ( const Expression::expression_size_type< CLS , N , N >& m )
             {
-                static_cast< THIS& >( *this ).Fill( Expression::mat_type< THIS >( static_cast< const THIS& >( *this ) * m ) );
+                static_cast< THIS& >( *this ).FillAggressive( Expression::mat_type< THIS >( static_cast< const THIS& >( *this ) * m ) );
             }
 
             template < typename CLS >
             _ehm_inline void operator += ( const Expression::expression_size_type< CLS , N , N >& exp )
             {
-                static_cast< THIS& >( *this ).Plus( typename Expression::AssignShouldMakeTemp< THIS , CLS >::type( exp ) );
+                static_cast< THIS& >( *this ).PlusAggressive( typename Expression::AssignShouldMakeTemp< THIS , CLS >::type( exp ) );
             }
             template < typename CLS >
             _ehm_inline void operator -= ( const Expression::expression_size_type< CLS , N , N >& exp )
             {
-                static_cast< THIS& >( *this ).Minus( typename Expression::AssignShouldMakeTemp< THIS , CLS >::type( exp ) );
+                static_cast< THIS& >( *this ).MinusAggressive( typename Expression::AssignShouldMakeTemp< THIS , CLS >::type( exp ) );
             }
-            template < typename LST_TYPE >
             _ehm_inline
             void
-            operator += ( std::initializer_list< LST_TYPE > lst )
+            operator += ( std::initializer_list< T > lst )
             {
                 static_cast< THIS& >( *this ).Plus( lst.begin() , lst.end() );
             }
-            template < typename LST_TYPE >
             _ehm_inline
             void
-            operator -= ( std::initializer_list< LST_TYPE > lst )
+            operator -= ( std::initializer_list< T > lst )
             {
                 static_cast< THIS& >( *this ).Minus( lst.begin() , lst.end() );
             }
@@ -57,12 +55,12 @@ namespace EH
             template < typename CLS , typename = void >
             _ehm_inline void operator += ( const Expression::expression_size_type< CLS , N , 1 >& v )
             {
-                static_cast< THIS& >( *this ).Diagonal().Plus( typename Expression::AssignShouldMakeTemp< THIS , CLS >::type( v ) );
+                static_cast< THIS& >( *this ).Diagonal().PlusAggressive( typename Expression::AssignShouldMakeTemp< THIS , CLS >::type( v ) );
             }
             template < typename CLS , typename = void >
             _ehm_inline void operator -= ( const Expression::expression_size_type< CLS , N , 1 >& v )
             {
-                static_cast< THIS& >( *this ).Diagonal().Minus( typename Expression::AssignShouldMakeTemp< THIS , CLS >::type( v ) );
+                static_cast< THIS& >( *this ).Diagonal().MinusAggressive( typename Expression::AssignShouldMakeTemp< THIS , CLS >::type( v ) );
             }
             _ehm_inline void operator += ( const T a )
             {
@@ -77,12 +75,11 @@ namespace EH
             template < typename EXP_CLS >
             _ehm_inline void operator = ( const Expression::expression_size_type< EXP_CLS , N , N >& m )
             {
-                static_cast< THIS& >( *this ).Fill( typename Expression::AssignShouldMakeTemp< THIS , EXP_CLS >::type( m ) );
+                static_cast< THIS& >( *this ).FillAggressive( typename Expression::AssignShouldMakeTemp< THIS , EXP_CLS >::type( m ) );
             }
-            template < typename LST_TYPE >
             _ehm_inline
             void
-            operator = ( std::initializer_list< LST_TYPE > lst )
+            operator = ( std::initializer_list< T > lst )
             {
                 static_cast< THIS& >( *this ).Fill( lst.begin() , lst.end() );
             }
@@ -90,15 +87,14 @@ namespace EH
             _ehm_inline void operator = ( const Expression::expression_size_type< EXP_CLS , N , 1 >& m )
             {
                 static_cast< THIS& >( *this ).Fill( 0 );
-                static_cast< THIS& >( *this ).Diagonal() = m;
+                static_cast< THIS& >( *this ).Diagonal().FillAggressive( m );
             }
-            template < typename SCALAR_TYPE >
             _ehm_inline
-            typename std::enable_if< Expression::is_scalar< SCALAR_TYPE >::value >::type
-            operator = ( const SCALAR_TYPE a )
+            void
+            operator = ( const T a )
             {
                 static_cast< THIS& >( *this ).Fill( 0 );
-                static_cast< THIS& >( *this ).Diagonal() = a;
+                static_cast< THIS& >( *this ).Diagonal().Fill( a );
             }
 
             void Log() const
@@ -134,7 +130,7 @@ namespace EH
             operator - ( const expression_size_type< TA , M , M >& m ,
                          const expression_size_type< TB , M , 1 >& v )
             {
-                return SquarePlus< TA , NegativeTo< TB > >( m , v.Negative() );
+                return SquarePlus< TA , decltype( v.Negative() ) >( m , v.Negative() );
             }
             template < typename TA , typename TB , typename = void ,
                        IndexType M = Traits< TA >::rows >
@@ -150,7 +146,7 @@ namespace EH
             operator - ( const expression_size_type< TB , M , 1 >& v ,
                          const expression_size_type< TA , M , M >& m )
             {
-                return SquarePlus< NegativeTo< TA > , TB >( m.Negative() , v );
+                return SquarePlus< decltype( m.Negative() ) , TB >( m.Negative() , v );
             }
 
             template < typename TA ,
@@ -183,8 +179,7 @@ namespace EH
             operator - ( const ret_type< TA > s ,
                          const expression_size_type< TA , M , M >& m )
             {
-                return SquarePlus< NegativeTo< TA > , ret_type< TA > >( m.Negative() , s );
-                //return SquareMinus< TA , ret_type< TA > >( m , s );
+                return SquarePlus< decltype( m.Negative() ) , ret_type< TA > >( m.Negative() , s );
             }
         };  // namespace Expression
 

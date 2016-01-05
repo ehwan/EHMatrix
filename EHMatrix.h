@@ -11,7 +11,6 @@
 
 #include "EHMatrix/EHMatrix_Util.h"
 
-#undef FMA_OPTIMIZATION
 #undef _ehm_inline
 #undef MAKE_SIGNED
 #undef ENABLE_ERROR_EXPRESSION

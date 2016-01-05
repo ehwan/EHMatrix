@@ -3,6 +3,7 @@
 #include "EHMatrix_Global.h"
 #include "EHMatrix_Expression.h"
 #include <utility>
+#include <bitset>
 
 namespace EH
 {
@@ -68,22 +69,6 @@ namespace EH
                     //Fill( lst.begin() , lst.end() );
                 //}
 
-                template < typename TO >
-                _ehm_inline
-                typename std::enable_if< std::is_same< TO , RET >::value == false , ConvertTo< CLS , TO > >::type
-                Convert() const
-                {
-                    return ConvertTo< CLS , TO >( *this );
-                }
-                // if TO is same type; then return THIS
-                template < typename TO >
-                _ehm_inline
-                typename std::enable_if< std::is_same< TO , RET >::value , const CLS& >::type
-                Convert() const
-                {
-                    return *this;
-                }
-
                 // sub-matrix functions
                 //{
                     constexpr _ehm_inline
@@ -126,14 +111,42 @@ namespace EH
                     }
                 //}
 
+                template < typename TO >
+                typename std::enable_if< std::is_same< RET , TO >::value , const CLS& >::type
+                _ehm_inline
+                Convert() const
+                {
+                    return *this;
+                }
+                template < typename TO ,
+                           typename = typename std::enable_if< std::is_same< RET , TO >::value == false >::type
+                         >
+                auto
+                _ehm_inline
+                Convert() const
+                {
+                    return UnaryExp< CLS , TO , 0 >(
+                            *this ,
+                            []( const auto x )
+                            {
+                                return static_cast< TO >( x );
+                            }
+                        );
+                }
 
                 _ehm_inline auto Negative() const
                 {
-                    return NegativeTo< CLS >( *this );
+                    return UnaryExp< CLS , void , 0 >(
+                            *this ,
+                            []( const auto a )
+                            {
+                                return -a;
+                            }
+                        );
                 }
                 _ehm_inline auto operator - () const
                 {
-                    return NegativeTo< CLS >( *this );
+                    return Negative();
                 }
 
                 _ehm_inline auto Transpose()
@@ -169,37 +182,6 @@ namespace EH
                     return ShuffleExp< typename std::add_const< CLS >::type , TA >( *this , idx );
                 }
 
-                // fill with given iterator
-                // gettable
-                template < typename IterType , typename SFINE = CLS >
-                typename std::enable_if< Traits< SFINE >::is_gettable >::type
-                Fill( IterType begin , IterType end )
-                {
-                    static_assert( std::is_convertible< typename std::iterator_traits< IterType >::value_type , RET >::value ,
-                            "invalid type of iterator assign" );
-                    assert( std::distance( begin , end ) == rows*cols );
-                    for( IndexType i=0; i<cols; ++i )
-                    {
-                        for( IndexType j=0; j<rows; ++j )
-                        {
-                            GetByRef( *this , i , j ) = *( begin++ );
-                        }
-                    }
-                }
-                // fill with given iterator
-                // non-gettable
-                template < typename IterType , typename SFINE = CLS >
-                typename std::enable_if< Traits< SFINE >::is_gettable==false >::type
-                Fill( IterType begin , IterType end )
-                {
-                    static_assert( std::is_convertible< typename std::iterator_traits< IterType >::value_type , RET >::value ,
-                            "invalid type of iterator assign" );
-                    assert( std::distance( begin , end ) == rows*cols );
-                    for( IndexType i=0; i<cols*rows; ++i )
-                    {
-                        GetByRef( *this , i ) = *( begin++ );
-                    }
-                }
 
                 // the template of expression;
                 // use this functions at derived class; eg. Matrix.
@@ -211,282 +193,543 @@ namespace EH
                 //
                 // has versions of gettable & non-gettable for performance;
 
-                template < typename T >
-                typename std::enable_if< Traits< CLS >::is_gettable || Traits< T >::is_gettable >::type
-                Fill( T&& a )
+
+                template < typename FUNC , typename SFINE = CLS >
+                typename std::enable_if< Traits< SFINE >::is_gettable >::type
+                _ehm_inline
+                Foreach( FUNC&& func )
                 {
-                    static_assert( is_scalar< T >::value || ( Traits< T >::rows == rows && Traits< T >::cols == cols ) ,
-                            "assign invalid size of expression" );
-                    for( IndexType i=0; i<cols; ++i )
+                    for( IndexType x=0; x<cols; ++x )
                     {
-                        for( IndexType j=0; j<rows; ++j )
+                        for( IndexType y=0; y<rows; ++y )
                         {
-                            GetByRef( *this , i , j ) = GetBy( a , i , j );
+                            func( GetByRef( *this , x , y ) );
                         }
                     }
                 }
-                template < typename T >
-                typename std::enable_if< Traits< CLS >::is_gettable==false && Traits< T >::is_gettable==false >::type
-                Fill( T&& a )
+                template < typename FUNC , typename SFINE = CLS >
+                typename std::enable_if< Traits< SFINE >::is_gettable == false >::type
+                _ehm_inline
+                Foreach( FUNC&& func )
                 {
-                    static_assert( is_scalar< T >::value || ( Traits< T >::rows == rows && Traits< T >::cols == cols ) ,
-                            "assign invalid size of expression" );
                     for( IndexType i=0; i<cols*rows; ++i )
                     {
-                        GetByRef( *this , i ) = GetBy( a , i );
+                        func( GetByRef( *this , i ) );
                     }
                 }
-
-                template < IndexType OFFSET = 0 , IndexType MAX = rows , typename SFINE = CLS , typename T0 , typename ... Ts >
-                typename std::enable_if< is_column_vector< SFINE >::value >::type
-                FillAggressive( T0&& a , Ts&& ... args )
+                template < typename T0 , typename FUNC , typename SFINE = CLS >
+                typename std::enable_if< Traits< SFINE >::is_gettable >::type
+                _ehm_inline
+                Foreach( FUNC&& func , T0&& s )
                 {
-                    static_assert( is_column_vector< T0 >::value , "only vector can perform aggressive-assignment" );
-
-                    constexpr const IndexType _ROWS = Traits< T0 >::rows;
-                    for( IndexType i=0; i<_ROWS; ++i )
+                    for( IndexType x=0; x<cols; ++x )
                     {
-                        GetByRef( *this , 0 , OFFSET + i ) = GetBy( a , 0 , i );
+                        for( IndexType y=0; y<rows; ++y )
+                        {
+                            func( GetByRef( *this , x , y ) , GetBy( s , x , y ) );
+                        }
                     }
-                    FillAggressive< OFFSET + _ROWS , MAX >( std::template forward< Ts >( args )... );
                 }
-                template < IndexType OFFSET = 0 , IndexType MAX = cols , typename SFINE = CLS , typename T0 , typename ... Ts >
-                typename std::enable_if< is_column_vector< SFINE >::value == false >::type
-                FillAggressive( T0&& a , Ts&& ... args )
+                template < typename T0 , typename FUNC , typename SFINE = CLS >
+                typename std::enable_if< Traits< SFINE >::is_gettable == false >::type
+                _ehm_inline
+                Foreach( FUNC&& func , T0&& s )
                 {
-                    static_assert( Traits< T0 >::rows == rows , "invalid row size for non-vector aggresive assign" );
+                    for( IndexType i=0; i<cols*rows; ++i )
+                    {
+                        func( GetByRef( *this , i ) , GetBy( s , i ) );
+                    }
+                }
+                template < typename IterType , typename FUNC , typename SFINE = CLS >
+                typename std::enable_if< Traits< SFINE >::is_gettable >::type
+                Foreach( FUNC&& func , IterType&& begin , IterType&& end )
+                {
+                    assert( std::distance( begin , end ) == rows * cols );
+                    for( IndexType x=0; x<cols; ++x )
+                    {
+                        for( IndexType y=0; y<rows; ++y )
+                        {
+                            func( GetByRef( *this , x , y ) , *(begin++) );
+                        }
+                    }
+                }
+                template < typename IterType , typename FUNC , typename SFINE = CLS >
+                typename std::enable_if< Traits< SFINE >::is_gettable == false >::type
+                Foreach( FUNC&& func , IterType&& begin , IterType&& end )
+                {
+                    assert( std::distance( begin , end ) == rows * cols );
+                    for( IndexType i=0; i<cols*rows; ++i )
+                    {
+                        func( GetByRef( *this , i ) , *(begin++) );
+                    }
+                }
 
+
+                template < IndexType OX = 0 , IndexType OY = 0 , IndexType M0 = rows , IndexType N0 = cols , IndexType _LEFT ,
+                           typename T0 , typename ... Ts , typename FUNC >
+                typename std::enable_if< _LEFT!=0 >::type
+                _ehm_inline
+                AggressiveForeach( FUNC&& func , T0&& arg0 , Ts&& ... args )
+                {
+                    constexpr const IndexType _SIZE = Traits< T0 >::rows * Traits< T0 >::cols;
+                    static_assert( _SIZE <= _LEFT , "Invalid expression size for aggressive assign" );
+                    AggressiveForeach< OX , OY , M0 , N0 , _LEFT - _SIZE >(
+                        std::template forward< FUNC >( func ) ,
+                        std::template forward< Ts >( args )...
+                    );
+                }
+                template < IndexType OX = 0 , IndexType OY = 0 , IndexType M0 = rows , IndexType N0 = cols , IndexType _LEFT = 0 ,
+                           typename T0 , typename ... Ts , typename FUNC >
+                typename std::enable_if<
+                    _LEFT == 0 &&
+                    Traits< T0 >::rows == M0 &&
+                    Traits< T0 >::cols == N0 &&
+
+                    ( OY != 0 || M0 != rows ||
+                    Traits< CLS >::is_gettable || Traits< T0 >::is_gettable )
+                >::type
+                _ehm_inline
+                AggressiveForeach( FUNC&& func , T0&& arg0 , Ts&& ... args )
+                {
+                    for( IndexType x=0; x<N0; ++x )
+                    {
+                        for( IndexType y=0; y<M0; ++y )
+                        {
+                            func( GetByRef( *this , x + OX , y + OY ) , GetBy( arg0 , x , y ) );
+                        }
+                    }
+                }
+                template < IndexType OX = 0 , IndexType OY = 0 , IndexType M0 = rows , IndexType N0 = cols , IndexType _LEFT = 0 ,
+                           typename T0 , typename ... Ts , typename FUNC >
+                typename std::enable_if<
+                    _LEFT == 0 &&
+                    Traits< T0 >::rows == M0 &&
+                    Traits< T0 >::cols == N0 &&
+
+                    OY == 0 && M0 == rows &&
+                    Traits< CLS >::is_gettable == false && Traits < T0 >::is_gettable == false
+                >::type
+                _ehm_inline
+                AggressiveForeach( FUNC&& func , T0&& arg0 , Ts&& ... args )
+                {
+                    for( IndexType i=0; i<M0*N0; ++i )
+                    {
+                        func( GetByRef( *this , i + OX*rows ) , GetBy( arg0 , i ) );
+                    }
+                }
+                template < IndexType OX = 0 , IndexType OY = 0 , IndexType M0 = rows , IndexType N0 = cols , IndexType _LEFT = 0 ,
+                           typename T0 , typename ... Ts , typename FUNC >
+                typename std::enable_if<
+                    _LEFT == 0 &&
+                    Traits< T0 >::rows == M0 &&
+                    Traits< T0 >::cols != N0
+                >::type
+                _ehm_inline
+                AggressiveForeach( FUNC&& func , T0&& arg0 , Ts&& ... args )
+                {
                     constexpr const IndexType _COLS = Traits< T0 >::cols;
-
-                    for( IndexType x=0; x<_COLS; ++x )
-                    {
-                        for( IndexType i=0; i<rows; ++i )
-                        {
-                            GetByRef( *this , OFFSET+x , i ) = GetBy( a , x , i );
-                        }
-                    }
-                    FillAggressive< OFFSET + _COLS , MAX >( std::template forward< Ts >( args )... );
+                    AggressiveForeach< OX , OY , M0 , _COLS      >(
+                            std::template forward< FUNC >( func ) ,
+                            std::template forward< T0 >( arg0 )
+                    );
+                    AggressiveForeach< OX + _COLS , OY , M0 , N0 - _COLS >(
+                            std::template forward< FUNC >( func ) ,
+                            std::template forward< Ts >( args )...
+                    );
                 }
-                template < IndexType OFFSET = 0 , IndexType MAX >
-                _ehm_inline void FillAggressive()
+                template < IndexType OX = 0 , IndexType OY = 0 , IndexType M0 = rows , IndexType N0 = cols , IndexType _LEFT = 0 ,
+                           typename T0 , typename ... Ts , typename FUNC >
+                typename std::enable_if<
+                    _LEFT == 0 &&
+                    Traits< T0 >::rows != M0 &&
+                    Traits< T0 >::cols == N0
+                >::type
+                _ehm_inline
+                AggressiveForeach( FUNC&& func , T0&& arg0 , Ts&& ... args )
                 {
-                    static_assert( OFFSET == MAX , "Invalid size for aggresive assignment" );
+                    constexpr const IndexType _ROWS = Traits< T0 >::rows;
+                    AggressiveForeach< OX , OY , _ROWS , N0 >(
+                            std::template forward< FUNC >( func ) ,
+                            std::template forward< T0 >( arg0 )
+                    );
+                    AggressiveForeach< OX , OY + _ROWS , M0 - _ROWS , N0 >(
+                            std::template forward< FUNC >( func ) ,
+                            std::template forward< Ts >( args )...
+                    );
                 }
-
-
-                // multiply , divide
-                // same as Fill()
-                template < typename T >
-                typename std::enable_if< Traits< CLS >::is_gettable || Traits< T >::is_gettable >::type
-                Multiply( T&& a )
+                template < IndexType OX = 0 , IndexType OY = 0 , IndexType M0 = rows , IndexType N0 = cols , IndexType _LEFT = 0 ,
+                           typename T0 , typename ... Ts , typename FUNC >
+                typename std::enable_if<
+                    _LEFT == 0 &&
+                    Traits< T0 >::rows != M0 &&
+                    Traits< T0 >::cols != N0
+                >::type
+                _ehm_inline
+                AggressiveForeach( FUNC&& func , T0&& arg0 , Ts&& ... args )
                 {
-                    static_assert( is_scalar< T >::value || ( Traits< T >::rows == rows && Traits< T >::cols == cols ) ,
-                            "Multiply invalid size of expression" );
-                    for( IndexType i=0; i<cols; ++i )
-                    {
-                        for( IndexType j=0; j<rows; ++j )
-                        {
-                            GetByRef( *this , i , j ) *= GetBy( a , i , j );
-                        }
-                    }
-                }
-                template < typename T >
-                typename std::enable_if< Traits< CLS >::is_gettable==false && Traits< T >::is_gettable==false >::type
-                Multiply( T&& a )
-                {
-                    static_assert( is_scalar< T >::value || ( Traits< T >::rows == rows && Traits< T >::cols == cols ) ,
-                            "Multiply invalid size of expression" );
-                    for( IndexType i=0; i<cols*rows; ++i )
-                    {
-                        GetByRef( *this , i ) *= GetBy( a , i );
-                    }
-                }
-                template < typename IterType , typename SFINE = CLS >
-                typename std::enable_if< Traits< SFINE >::is_gettable >::type
-                Multiply( IterType begin , IterType end )
-                {
-                    static_assert( std::is_convertible< typename std::iterator_traits< IterType >::value_type , RET >::value ,
-                            "invalid type of iterator multiply" );
-                    assert( std::distance( begin , end ) == rows*cols );
-                    for( IndexType i=0; i<cols; ++i )
-                    {
-                        for( IndexType j=0; j<rows; ++j )
-                        {
-                            GetByRef( *this , i , j ) *= *(begin++);
-                        }
-                    }
-                }
-                template < typename IterType , typename SFINE = CLS >
-                typename std::enable_if< Traits< SFINE >::is_gettable==false >::type
-                Multiply( IterType begin , IterType end )
-                {
-                    static_assert( std::is_convertible< typename std::iterator_traits< IterType >::value_type , RET >::value ,
-                            "invalid type of iterator multiply" );
-                    assert( std::distance( begin , end ) == rows*cols );
-                    for( IndexType i=0; i<cols*rows; ++i )
-                    {
-                        GetByRef( *this , i ) *= *( begin++ );
-                    }
+                    constexpr const IndexType _COLS = Traits< T0 >::cols;
+                    constexpr const IndexType _ROWS = Traits< T0 >::rows;
+                    AggressiveForeach< OX , OY , _ROWS , _COLS >(
+                            std::template forward< FUNC >( func ) ,
+                            std::template forward< T0 >( arg0 )
+                    );
+                    AggressiveForeach< OX , OY + _ROWS , M0 - _ROWS , _COLS >(
+                            std::template forward< FUNC >( func ) ,
+                            std::template forward< Ts >( args )...
+                    );
+                    AggressiveForeach< OX + _COLS , OY , M0 , N0 - _COLS , _COLS * ( M0 - _ROWS ) >(
+                            std::template forward< FUNC >( func ) ,
+                            std::template forward< Ts >( args )...
+                    );
                 }
 
-                template < typename T >
-                typename std::enable_if< Traits< CLS >::is_gettable || Traits< T >::is_gettable >::type
-                Divide( T&& a )
-                {
-                    static_assert( is_scalar< T >::value || ( Traits< T >::rows == rows && Traits< T >::cols == cols ) ,
-                            "Divide invalid size of expression" );
-                    for( IndexType i=0; i<cols; ++i )
-                    {
-                        for( IndexType j=0; j<rows; ++j )
-                        {
-                            GetByRef( *this , i , j ) /= GetBy( a , i , j );
-                        }
-                    }
-                }
-                template < typename T >
-                typename std::enable_if< Traits< CLS >::is_gettable==false && Traits< T >::is_gettable==false >::type
-                Divide( T&& a )
-                {
-                    static_assert( is_scalar< T >::value || ( Traits< T >::rows == rows && Traits< T >::cols == cols ) ,
-                            "Divide invalid size of expression" );
-                    for( IndexType i=0; i<cols*rows; ++i )
-                    {
-                        GetByRef( *this , i ) /= GetBy( a , i );
-                    }
-                }
-                template < typename IterType , typename SFINE = CLS >
-                typename std::enable_if< Traits< SFINE >::is_gettable >::type
-                Divide( IterType begin , IterType end )
-                {
-                    static_assert( std::is_convertible< typename std::iterator_traits< IterType >::value_type , RET >::value ,
-                            "invalid type of iterator divide" );
-                    assert( std::distance( begin , end ) == rows*cols );
-                    for( IndexType i=0; i<cols; ++i )
-                    {
-                        for( IndexType j=0; j<rows; ++j )
-                        {
-                            GetByRef( *this , i , j ) /= *(begin++);
-                        }
-                    }
-                }
-                template < typename IterType , typename SFINE = CLS >
-                typename std::enable_if< Traits< SFINE >::is_gettable == false >::type
-                Divide( IterType begin , IterType end )
-                {
-                    static_assert( std::is_convertible< typename std::iterator_traits< IterType >::value_type , RET >::value ,
-                            "invalid type of iterator divide" );
-                    assert( std::distance( begin , end ) == rows*cols );
-                    for( IndexType i=0; i<cols*rows; ++i )
-                    {
-                        GetByRef( *this , i ) /= *( begin++ );
-                    }
-                }
 
-                // and plus-assign , minus-assign
-                template < typename T >
-                typename std::enable_if< Traits< CLS >::is_gettable || Traits< T >::is_gettable >::type
-                Plus( T&& a )
+                _ehm_inline
+                void
+                Fill( const RET a )
                 {
-                    static_assert( is_scalar< T >::value || ( Traits< T >::rows == rows && Traits< T >::cols == cols ) ,
-                            "Plus invalid size of expression" );
-                    for( IndexType i=0; i<cols; ++i )
-                    {
-                        for( IndexType j=0; j<rows; ++j )
+                    Foreach(
+                        [ a ]( auto& x )
                         {
-                            GetByRef( *this , i , j ) += GetBy( a , i , j );
+                             x = a;
                         }
-                    }
+                    );
                 }
-                template < typename T >
-                typename std::enable_if< Traits< CLS >::is_gettable==false && Traits< T >::is_gettable==false >::type
-                Plus( T&& a )
+                template < typename IterType >
+                _ehm_inline
+                void
+                Fill( IterType&& begin , IterType&& end )
                 {
-                    static_assert( is_scalar< T >::value || ( Traits< T >::rows == rows && Traits< T >::cols == cols ) ,
-                            "Plus invalid size of expression" );
-                    for( IndexType i=0; i<cols*rows; ++i )
-                    {
-                        GetByRef( *this , i ) += GetBy( a , i );
-                    }
-                }
-                template < typename IterType , typename SFINE = CLS >
-                typename std::enable_if< Traits< SFINE >::is_gettable >::type
-                Plus( IterType begin , IterType end )
-                {
-                    static_assert( std::is_convertible< typename std::iterator_traits< IterType >::value_type , RET >::value ,
-                            "invalid type of iterator plus" );
-                    assert( std::distance( begin , end ) == rows*cols );
-                    for( IndexType i=0; i<cols; ++i )
-                    {
-                        for( IndexType j=0; j<rows; ++j )
+                    Foreach(
+                        []( auto& a , const auto b )
                         {
-                            GetByRef( *this , i , j ) += *(begin++);
-                        }
-                    }
+                             a = b;
+                        } ,
+                        std::template forward< IterType >( begin ) , std::template forward< IterType >( end )
+                    );
                 }
-                template < typename IterType , typename SFINE = CLS >
-                typename std::enable_if< Traits< SFINE >::is_gettable == false >::type
-                Plus( IterType begin , IterType end )
+                template < typename ... Ts >
+                _ehm_inline
+                void
+                FillAggressive( Ts&& ... args )
                 {
-                    static_assert( std::is_convertible< typename std::iterator_traits< IterType >::value_type , RET >::value ,
-                            "invalid type of iterator plus" );
-                    assert( std::distance( begin , end ) == rows*cols );
-                    for( IndexType i=0; i<cols*rows; ++i )
-                    {
-                        GetByRef( *this , i ) += *( begin++ );
-                    }
+                    AggressiveForeach(
+                            []( auto& a , const auto b )
+                            {
+                                a = b;
+                            } ,
+                            std::template forward< Ts >( args )...
+                    );
+                }
+                template < typename ... Ts >
+                _ehm_inline
+                void
+                MultiplyAggressive( Ts&& ... args )
+                {
+                    AggressiveForeach(
+                            []( auto& a , const auto b )
+                            {
+                                a *= b;
+                            } ,
+                            std::template forward< Ts >( args )...
+                    );
+                }
+                template < typename ... Ts >
+                _ehm_inline
+                void
+                DivideAggressive( Ts&& ... args )
+                {
+                    AggressiveForeach(
+                            []( auto& a , const auto b )
+                            {
+                                a /= b;
+                            } ,
+                            std::template forward< Ts >( args )...
+                    );
+                }
+                template < typename ... Ts >
+                _ehm_inline
+                void
+                PlusAggressive( Ts&& ... args )
+                {
+                    AggressiveForeach(
+                            []( auto& a , const auto b )
+                            {
+                                a += b;
+                            } ,
+                            std::template forward< Ts >( args )...
+                    );
+                }
+                template < typename ... Ts >
+                _ehm_inline
+                void
+                MinusAggressive( Ts&& ... args )
+                {
+                    AggressiveForeach(
+                            []( auto& a , const auto b )
+                            {
+                                a -= b;
+                            } ,
+                            std::template forward< Ts >( args )...
+                    );
                 }
 
                 template < typename T >
-                typename std::enable_if< Traits< CLS >::is_gettable || Traits< T >::is_gettable >::type
-                Minus( T&& a )
+                _ehm_inline
+                void
+                Multiply( T&& s )
                 {
-                    static_assert( is_scalar< T >::value || ( Traits< T >::rows == rows && Traits< T >::cols == cols ) ,
-                            "Minus invalid size of expression" );
-                    for( IndexType i=0; i<cols; ++i )
-                    {
-                        for( IndexType j=0; j<rows; ++j )
+                    Foreach(
+                        [ s ]( auto& a )
                         {
-                            GetByRef( *this , i , j ) -= GetBy( a , i , j );
+                            a *= s;
                         }
-                    }
+                    );
                 }
                 template < typename T >
-                typename std::enable_if< Traits< CLS >::is_gettable==false && Traits< T >::is_gettable==false >::type
-                Minus( T&& a )
+                _ehm_inline
+                void
+                Divide( T&& s )
                 {
-                    static_assert( is_scalar< T >::value || ( Traits< T >::rows == rows && Traits< T >::cols == cols ) ,
-                            "Minus invalid size of expression" );
-                    for( IndexType i=0; i<cols*rows; ++i )
-                    {
-                        GetByRef( *this , i ) -= GetBy( a , i );
-                    }
-                }
-                template < typename IterType , typename SFINE = CLS >
-                typename std::enable_if< Traits< SFINE >::is_gettable >::type
-                Minus( IterType begin , IterType end )
-                {
-                    static_assert( std::is_convertible< typename std::iterator_traits< IterType >::value_type , RET >::value ,
-                            "invalid type of iterator minus" );
-                    assert( std::distance( begin , end ) == rows*cols );
-                    for( IndexType i=0; i<cols; ++i )
-                    {
-                        for( IndexType j=0; j<rows; ++j )
+                    Foreach(
+                        [ s ]( auto& a )
                         {
-                            GetByRef( *this , i , j ) -= *(begin++);
+                            a /= s;
+                        }
+                    );
+                }
+                template < typename T >
+                _ehm_inline
+                void
+                Plus( T&& s )
+                {
+                    Foreach(
+                        [ s ]( auto& a )
+                        {
+                            a += s;
+                        }
+                    );
+                }
+                template < typename T >
+                _ehm_inline
+                void
+                Minus( T&& s )
+                {
+                    Foreach(
+                        [ s ]( auto& a )
+                        {
+                            a -= s;
+                        }
+                    );
+                }
+
+                template < typename IterType >
+                _ehm_inline
+                void
+                Multiply( IterType&& begin , IterType&& end )
+                {
+                    Foreach(
+                        []( auto& a , const auto b )
+                        {
+                            a *= b;
+                        } ,
+                        std::template forward< IterType >( begin ) , std::template forward< IterType >( end )
+                    );
+                }
+                template < typename IterType >
+                _ehm_inline
+                void
+                Divide( IterType&& begin , IterType&& end )
+                {
+                    Foreach(
+                        []( auto& a , const auto b )
+                        {
+                            a /= b;
+                        } ,
+                        std::template forward< IterType >( begin ) , std::template forward< IterType >( end )
+                    );
+                }
+                template < typename IterType >
+                _ehm_inline
+                void
+                Plus( IterType&& begin , IterType&& end )
+                {
+                    Foreach(
+                        []( auto& a , const auto b )
+                        {
+                            a += b;
+                        } ,
+                        std::template forward< IterType >( begin ) , std::template forward< IterType >( end )
+                    );
+                }
+                template < typename IterType >
+                _ehm_inline
+                void
+                Minus( IterType&& begin , IterType&& end )
+                {
+                    Foreach(
+                        []( auto& a , const auto b )
+                        {
+                            a -= b;
+                        } ,
+                        std::template forward< IterType >( begin ) , std::template forward< IterType >( end )
+                    );
+                }
+
+
+                template < typename SFINE = RET >
+                typename std::enable_if<
+                    std::is_same< bool , SFINE >::value &&
+                    Traits< CLS >::is_gettable ,
+                    bool
+                >::type
+                all() const
+                {
+                    bool t = true;
+                    for( IndexType x=0; x<cols; ++x )
+                    {
+                        for( IndexType y=0; y<rows; ++y )
+                        {
+                            t &= GetBy( *this , x , y );
                         }
                     }
+                    return t;
                 }
-                template < typename IterType , typename SFINE = CLS >
-                typename std::enable_if< Traits< SFINE >::is_gettable == false >::type
-                Minus( IterType begin , IterType end )
+                template < typename SFINE = RET >
+                typename std::enable_if<
+                    std::is_same< bool , SFINE >::value &&
+                    Traits< CLS >::is_gettable == false ,
+                    bool
+                >::type
+                all() const
                 {
-                    static_assert( std::is_convertible< typename std::iterator_traits< IterType >::value_type , RET >::value ,
-                            "invalid type of iterator minus" );
-                    assert( std::distance( begin , end ) == rows*cols );
+                    bool t = true;
                     for( IndexType i=0; i<cols*rows; ++i )
                     {
-                        GetByRef( *this , i ) -= *( begin++ );
+                        t &= GetBy( *this , i );
                     }
+                    return t;
+                }
+                template < typename SFINE = RET >
+                typename std::enable_if<
+                    std::is_same< bool , SFINE >::value &&
+                    Traits< CLS >::is_gettable ,
+                    bool
+                >::type
+                none() const
+                {
+                    bool t = false;
+                    for( IndexType x=0; x<cols; ++x )
+                    {
+                        for( IndexType y=0; y<rows; ++y )
+                        {
+                            t |= GetBy( *this , x , y );
+                        }
+                    }
+                    return t == false;
+                }
+                template < typename SFINE = RET >
+                typename std::enable_if<
+                    std::is_same< bool , SFINE >::value &&
+                    Traits< CLS >::is_gettable == false ,
+                    bool
+                >::type
+                none() const
+                {
+                    bool t = false;
+                    for( IndexType i=0; i<cols*rows; ++i )
+                    {
+                        t |= GetBy( *this , i );
+                    }
+                    return t == false;
+                }
+                template < typename SFINE = RET >
+                typename std::enable_if<
+                    std::is_same< bool , SFINE >::value &&
+                    Traits< CLS >::is_gettable ,
+                    bool
+                >::type
+                any() const
+                {
+                    bool t = false;
+                    for( IndexType x=0; x<cols; ++x )
+                    {
+                        for( IndexType y=0; y<rows; ++y )
+                        {
+                            t |= GetBy( *this , x , y );
+                        }
+                    }
+                    return t;
+                }
+                template < typename SFINE = RET >
+                typename std::enable_if<
+                    std::is_same< bool , SFINE >::value &&
+                    Traits< CLS >::is_gettable == false ,
+                    bool
+                >::type
+                any() const
+                {
+                    bool t = false;
+                    for( IndexType i=0; i<cols*rows; ++i )
+                    {
+                        t |= GetBy( *this , i );
+                    }
+                    return t;
+                }
+
+                template < typename SFINE = RET >
+                typename std::enable_if<
+                    std::is_same< bool , SFINE >::value &&
+                    Traits< CLS >::is_gettable ,
+                    std::bitset< rows*cols >
+                >::type
+                bitset() const
+                {
+                    std::bitset< rows*cols > ret;
+                    for( IndexType x=0; x<cols; ++x )
+                    {
+                        for( IndexType y=0; y<rows; ++y )
+                        {
+                            ret.set( y + x*rows , GetBy( *this , x , y ) );
+                        }
+                    }
+                    return ret;
+                }
+                template < typename SFINE = RET >
+                typename std::enable_if<
+                    std::is_same< bool , SFINE >::value &&
+                    Traits< CLS >::is_gettable == false ,
+                    std::bitset< rows*cols >
+                >::type
+                bitset() const
+                {
+                    std::bitset< rows*cols > ret;
+                    for( IndexType i=0; i<cols*rows; ++i )
+                    {
+                        ret.set( i , GetBy( *this , i ) );
+                    }
+                    return ret;
+                }
+
+                template < typename SFINE = RET >
+                _ehm_inline
+                operator typename std::enable_if<
+                    std::is_same< SFINE , bool >::value ,
+                    std::bitset< rows*cols >
+                >::type
+                () const
+                {
+                    return bitset();
+                }
+                template < typename SFINE = RET >
+                _ehm_inline
+                operator typename std::enable_if<
+                    std::is_same< SFINE , bool >::value ,
+                    bool
+                >::type
+                () const
+                {
+                    return all();
                 }
 
                 // simply forwarding assign operator from interface

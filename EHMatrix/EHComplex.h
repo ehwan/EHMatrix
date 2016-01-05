@@ -10,8 +10,8 @@ namespace EH
     {
         namespace Complex
         {
-            template < typename T = float >
-            auto constexpr Complex( const T theta )
+            template < typename T = float , typename ARG >
+            auto constexpr Complex( const ARG theta )
             {
                 return Matrix< T , 2 , 1 >
                 {

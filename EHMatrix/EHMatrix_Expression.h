@@ -4,6 +4,7 @@
 #include "EHMatrix_Expression_functions.h"
 
 #include <initializer_list>
+#include <functional>
 
 
 
@@ -17,13 +18,14 @@ namespace EH
             template < typename T >
             struct Traits
             {
-                typedef typename std::enable_if< std::is_arithmetic< T >::value , int >::type Enabled;
+                typedef typename std::enable_if< is_scalar< T >::value , int >::type Enabled;
                 constexpr const static Enabled enabled_v = 0;
 
                 constexpr const static bool is_gettable = false;
                 constexpr const static IndexType cols = 1;
                 constexpr const static IndexType rows = 1;
                 typedef T return_type;
+
 
                 // if restrict is false;
                 // at assign make temporary matrix to copy from;
@@ -44,30 +46,101 @@ namespace EH
                 };
             };
 
+            template < typename TA , typename RET = void , int OPADD = 1 >
+            struct UnaryExp :
+                Expression< UnaryExp< TA , RET , OPADD > >
+            {
+                typedef typename Traits< UnaryExp< TA , RET , OPADD > >::return_type _RET;
+                auto_creference< TA > a;
 
-            template < typename TA , typename TO >
-            struct ConvertTo;
-            template < typename TA >
-            struct NegativeTo;
+                std::function< _RET( typename Traits< TA >::return_type ) > func;
+
+                template < typename FUNC >
+                UnaryExp( auto_creference< TA > _a , FUNC&& _func )
+                    : a( _a ) , func( _func )
+                {
+                }
+
+                template < typename T2 , IndexType M2 , IndexType N2 >
+                constexpr _ehm_inline bool has_same_root( const Matrix< T2 , M2 , N2 >& ptr ) const
+                {
+                    return HasSameRoot( a , ptr );
+                }
+
+                _ehm_inline _RET operator [] ( IndexType i ) const
+                {
+                    //return GetBy( a , i );
+                    return func( GetBy( a , i ) );
+                }
+                _ehm_inline _RET Get( IndexType x , IndexType y ) const
+                {
+                    //return GetBy( a  ,x , y );
+                    return func( GetBy( a , x , y ) );
+                }
+            };
+            template < typename TA , typename RET , int OPADD >
+            struct Traits< UnaryExp< TA , RET , OPADD > > : Traits< TA >
+            {
+                typedef typename std::conditional<
+                            std::is_same< RET , void >::value ,
+                            typename Traits< TA >::return_type ,
+                            RET
+                        >::type return_type;
+                constexpr const static bool catch_reference = false;
+                constexpr const static int operations = Traits< TA >::operations + OPADD;
+            };
+
+
+            template < typename TA , typename TB , typename RET = void , int OPADD = 1 >
+            struct BinaryExp :
+                Expression< BinaryExp< TA , TB , RET , OPADD > >
+            {
+                typedef typename Traits< BinaryExp< TA , TB , RET , OPADD > >::return_type _RET;
+
+                auto_creference< TA > a;
+                auto_creference< TB > b;
+
+                std::function< _RET( typename Traits< TA >::return_type , typename Traits< TB >::return_type ) > func;
+
+                template < typename FUNC >
+                BinaryExp( auto_creference< TA > _a , auto_creference< TB > _b , FUNC&& _func )
+                    : a( _a ) , b( _b ) , func( _func )
+                {
+                }
+
+                template < typename T2 , IndexType M2 , IndexType N2 >
+                constexpr _ehm_inline bool has_same_root( const Matrix< T2 , M2 , N2 >& ptr ) const
+                {
+                    return HasSameRoot( a , ptr ) || HasSameRoot( b , ptr );
+                }
+
+                _ehm_inline auto operator [] ( IndexType i ) const
+                {
+                    //return GetBy( a , i );
+                    return func( GetBy( a , i ) , GetBy( b , i ) );
+                }
+                _ehm_inline auto Get( IndexType x , IndexType y ) const
+                {
+                    //return GetBy( a , x , y );
+                    return func( GetBy( a , x , y ) , GetBy( b , x , y ) );
+                }
+            };
+            template < typename TA , typename TB , typename RET , int OPADD >
+            struct Traits< BinaryExp< TA , TB , RET , OPADD > > : TraitsCombine< TA , TB >
+            {
+                typedef typename std::conditional<
+                            std::is_same< RET , void >::value ,
+                            typename std::common_type<
+                                typename Traits< TA >::return_type , typename Traits< TB >::return_type
+                            >::type ,
+                            RET
+                        >::type return_type;
+                constexpr const static bool catch_reference = false;
+                constexpr const static int operations = Traits< TA >::operations + Traits< TB >::operations + OPADD;
+            };
+
             template < typename TA >
             struct TransposeTo;
-            template < typename TA , typename TB >
-            struct Plus;
-            template < typename TA , typename TB >
-            struct Multiply;
-            template < typename TA , typename TB >
-            struct Divide;
-            template < typename TA , typename TB >
-            struct MatMatMult;
-            template < typename TA , typename TB , typename TC >
-            struct FMA;
-
-            template < typename TA >
-            struct FloorExp;
-            template < typename TA >
-            struct CeilExp;
-            template < typename TA >
-            struct RoundExp;
 
             template < typename TA , typename TB >
             struct SquarePlus;
@@ -97,73 +170,6 @@ namespace EH
             struct QuatConjugate;
 
             // CLS : class where operator[] is defined;
-
-            template < typename TA , typename TO >
-            struct ConvertTo :
-                Expression< ConvertTo< TA , TO > >
-            {
-                auto_creference< TA > a;
-
-                ConvertTo( auto_creference< TA > _a )
-                    : a( _a )
-                {
-                }
-
-                template < typename T2 , IndexType M2 , IndexType N2 >
-                constexpr _ehm_inline bool has_same_root( const Matrix< T2 , M2 , N2 >& ptr ) const
-                {
-                    return HasSameRoot( a , ptr );
-                }
-
-                _ehm_inline TO operator [] ( IndexType i ) const
-                {
-                    return static_cast< TO >( GetBy( a , i ) );
-                }
-                _ehm_inline TO Get( IndexType x , IndexType y ) const
-                {
-                    return static_cast< TO >( GetBy( a , x , y ) );
-                }
-            };   // struct ConvertTo
-            template < typename TA , typename TO >
-            struct Traits< ConvertTo< TA , TO > > : Traits< TA >
-            {
-                typedef TO return_type;
-                constexpr const static bool catch_reference = false;
-            };
-
-            template < typename TA >
-            struct NegativeTo :
-                Expression< NegativeTo< TA > >
-            {
-                auto_creference< TA > a;
-
-                NegativeTo( auto_creference< TA > _a )
-                    : a( _a )
-                {
-                }
-
-                template < typename T2 , IndexType M2 , IndexType N2 >
-                constexpr _ehm_inline bool has_same_root( const Matrix< T2 , M2 , N2 >& ptr ) const
-                {
-                    return HasSameRoot( a , ptr );
-                }
-                _ehm_inline ret_type< TA > operator [] ( IndexType i ) const
-                {
-                    return -GetBy( a , i );
-                }
-                _ehm_inline ret_type< TA > Get( IndexType x , IndexType y ) const
-                {
-                    return -GetBy( a , x , y );
-                }
-            };  // struct NegativeTo
-
-            //TODO double negative to normal form
-            template < typename TA >
-            struct Traits< NegativeTo< TA > > : Traits< TA >
-            {
-                constexpr const static bool catch_reference = false;
-            };
-
             template < typename TA >
             struct TransposeTo :
                 Expression< TransposeTo< TA > >
@@ -210,142 +216,6 @@ namespace EH
                 constexpr const static bool is_restrict = false;
                 constexpr const static bool catch_reference = false;
             };
-
-            template < typename TA , typename TB >
-            struct Plus :
-                Expression< Plus< TA , TB > >
-            {
-                auto_creference< TA > a;
-                auto_creference< TB > b;
-
-                Plus( auto_creference< TA > _a , auto_creference< TB > _b ) :
-                    a( _a ) , b( _b )
-                {
-                }
-
-                template < typename T2 , IndexType M2 , IndexType N2 >
-                constexpr _ehm_inline bool has_same_root( const Matrix< T2 , M2 , N2 >& ptr ) const
-                {
-                    return HasSameRoot( a , ptr ) || HasSameRoot( b , ptr );
-                }
-                _ehm_inline auto operator [] ( IndexType i ) const
-                {
-                    return GetBy( a , i ) + GetBy( b , i );
-                }
-                _ehm_inline auto Get( IndexType x , IndexType y ) const
-                {
-                    return GetBy( a , x , y ) + GetBy( b , x , y );
-                }
-            };  // struct Plus
-
-#if FMA_OPTIMIZATION==1
-            // for fma optimize;
-            template < typename TA , typename TB , typename TC >
-            struct Plus<
-                Multiply< TA , TB > , TC > :
-                    FMA< TA , TB , TC >
-            {
-                Plus( auto_creference< Multiply< TA , TB > > a ,
-                      auto_creference< TC > c ) :
-                    FMA< TA , TB , TC >( a.a , a.b , c )
-                {
-                }
-            };
-            template < typename TA , typename TB , typename TC >
-            struct Plus<
-                TC , Multiply< TA , TB > > :
-                    FMA< TA , TB , TC >
-            {
-                Plus( auto_creference< TC > c ,
-                      auto_creference< Multiply< TA , TB > > a ) :
-                    FMA< TA , TB , TC >( a.a , a.b , c )
-                {
-                }
-            };
-            template< typename TAA , typename TAB ,
-                      typename TBA , typename TBB >
-            struct Plus<
-                Multiply< TAA , TAB > ,
-                Multiply< TBA , TBB > > :
-                    FMA< TAA , TAB , Multiply< TBA , TBB > >
-            {
-                Plus( auto_creference< Multiply< TAA , TAB > > a ,
-                      auto_creference< Multiply< TBA , TBB > > b ) :
-                    FMA< TAA , TAB , Multiply< TBA , TBB > >( a.a , a.b , b )
-                {
-                }
-            };
-#endif
-            template < typename TA , typename TB >
-            struct Traits< Plus< TA , TB > > : TraitsCombine< TA , TB >
-            {
-                constexpr const static bool catch_reference = false;
-            };
-
-            template < typename TA , typename TB >
-            struct Multiply :
-                Expression< Multiply< TA , TB > >
-            {
-                auto_creference< TA > a;
-                auto_creference< TB > b;
-
-                Multiply( auto_creference< TA > _a , auto_creference< TB > _b ) :
-                    a( _a ) , b( _b )
-                {
-                }
-
-                template < typename T2 , IndexType M2 , IndexType N2 >
-                constexpr _ehm_inline bool has_same_root( const Matrix< T2 , M2 , N2 >& ptr ) const
-                {
-                    return HasSameRoot( a , ptr ) || HasSameRoot( b , ptr );
-                }
-                _ehm_inline auto operator [] ( IndexType i ) const
-                {
-                    return GetBy( a , i ) * GetBy( b , i );
-                }
-                _ehm_inline auto Get( IndexType x , IndexType y ) const
-                {
-                    return GetBy( a , x , y ) * GetBy( b , x , y );
-                }
-            };  // struct Multiply
-            template < typename TA , typename TB >
-            struct Traits< Multiply< TA , TB > > : TraitsCombine< TA , TB >
-            {
-                constexpr const static bool catch_reference = false;
-            };
-
-            template < typename TA , typename TB >
-            struct Divide :
-                Expression< Divide< TA , TB > >
-            {
-                auto_creference< TA > a;
-                auto_creference< TB > b;
-
-                Divide( auto_creference< TA > _a , auto_creference< TB > _b ) :
-                    a( _a ) , b( _b )
-                {
-                }
-
-                template < typename T2 , IndexType M2 , IndexType N2 >
-                constexpr _ehm_inline bool has_same_root( const Matrix< T2 , M2 , N2 >& ptr ) const
-                {
-                    return HasSameRoot( a , ptr ) || HasSameRoot( b , ptr );
-                }
-                _ehm_inline auto operator [] ( IndexType i ) const
-                {
-                    return GetBy( a , i ) / GetBy( b , i );
-                }
-                _ehm_inline auto Get( IndexType x , IndexType y ) const
-                {
-                    return GetBy( a , x , y ) / GetBy( b , x , y );
-                }
-            };  // struct Divide
-            template < typename TA , typename TB >
-            struct Traits< Divide< TA , TB > > : TraitsCombine< TA , TB >
-            {
-                constexpr const static bool catch_reference = false;
-            };
-
 
             template < typename TA , typename TB >
             struct MatMatMult :
@@ -432,140 +302,16 @@ namespace EH
                     ShouldMakeTemp< TA , Traits< TB >::cols >::value || ShouldMakeTemp< TB , Traits< TA >::rows >::value;
             };
 
-
-            template < typename TA , typename TB , typename TC >
-            struct FMA :
-                Expression< FMA< TA , TB , TC > >
+            template < typename TA , typename TB >
+            MatMatMult< remove_cr< TA > , remove_cr< TB > >
+            make_matmatmult( TA&& a , TB&& b )
             {
-                auto_creference< TA > a;
-                auto_creference< TB > b;
-                auto_creference< TC > c;
+                return MatMatMult< remove_cr< TA > , remove_cr< TB > >(
+                        std::template forward< TA >( a ) ,
+                        std::template forward< TB >( b )
+                    );
+            }
 
-                FMA( auto_creference< TA > _a , auto_creference< TB > _b , auto_creference< TC > _c )
-                    : a( _a ) , b( _b ) , c( _c )
-                {
-                }
-
-                template < typename T2 , IndexType M2 , IndexType N2 >
-                constexpr _ehm_inline bool has_same_root( const Matrix< T2 , M2 , N2 >& ptr ) const
-                {
-                    return HasSameRoot( a , ptr ) || HasSameRoot( b , ptr ) || HasSameRoot( c , ptr );
-                }
-                _ehm_inline
-                typename std::common_type< ret_type< TA > , ret_type< TB > , ret_type< TC > >::type
-                operator [] ( IndexType i ) const
-                {
-                    return std::fma( GetBy( a , i ) , GetBy( b , i ) , GetBy( c , i ) );
-                }
-                _ehm_inline
-                typename std::common_type< ret_type< TA > , ret_type< TB > , ret_type< TC > >::type
-                Get ( IndexType x , IndexType y ) const
-                {
-                    return std::fma( GetBy( a , x , y ) , GetBy( b , x , y ) , GetBy( c , x , y ) );
-                }
-            };
-            template < typename TA , typename TB , typename TC >
-            struct Traits< FMA< TA , TB , TC > > : TraitsCombine< TA , TB , TC >
-            {
-                constexpr const static bool catch_reference = false;
-            };
-
-            template < typename TA >
-            struct FloorExp :
-                Expression< FloorExp< TA > >
-            {
-                auto_creference< TA > a;
-
-                FloorExp( auto_creference< TA > _a ) :
-                    a( _a )
-                {
-                }
-                template < typename T2 , IndexType M2 , IndexType N2 >
-                constexpr _ehm_inline bool has_same_root( const Matrix< T2 , M2 , N2 >& ptr ) const
-                {
-                    return HasSameRoot( a , ptr );
-                }
-
-                _ehm_inline auto operator [] ( IndexType i ) const
-                {
-                    return std::floor( GetBy( a , i ) );
-                }
-                _ehm_inline auto Get( IndexType x , IndexType y ) const
-                {
-                    return std::floor( GetBy( a , x , y ) );
-                }
-            };
-            template < typename TA >
-            struct CeilExp:
-                Expression< CeilExp< TA > >
-            {
-                auto_creference< TA > a;
-
-                CeilExp( auto_creference< TA > _a ) :
-                    a( _a )
-                {
-                }
-                template < typename T2 , IndexType M2 , IndexType N2 >
-                constexpr _ehm_inline bool has_same_root( const Matrix< T2 , M2 , N2 >& ptr ) const
-                {
-                    return HasSameRoot( a , ptr );
-                }
-
-                _ehm_inline auto operator [] ( IndexType i ) const
-                {
-                    return std::ceil( GetBy( a , i ) );
-                }
-                _ehm_inline auto Get( IndexType x , IndexType y ) const
-                {
-                    return std::ceil( GetBy( a , x , y ) );
-                }
-            };
-            template < typename TA >
-            struct RoundExp:
-                Expression< RoundExp< TA > >
-            {
-                auto_creference< TA > a;
-
-                RoundExp( auto_creference< TA > _a ) :
-                    a( _a )
-                {
-                }
-                template < typename T2 , IndexType M2 , IndexType N2 >
-                constexpr _ehm_inline bool has_same_root( const Matrix< T2 , M2 , N2 >& ptr ) const
-                {
-                    return HasSameRoot( a , ptr );
-                }
-
-                _ehm_inline auto operator [] ( IndexType i ) const
-                {
-                    return std::round( GetBy( a , i ) );
-                }
-                _ehm_inline auto Get( IndexType x , IndexType y ) const
-                {
-                    return std::round( GetBy( a , x , y ) );
-                }
-            };
-            template < typename TA >
-            struct Traits< FloorExp< TA > > : Traits< TA >
-            {
-                typedef decltype( std::floor( typename Traits< TA >::return_type(0) ) ) return_type;
-                constexpr const static bool catch_reference = false;
-                constexpr const static int operations = Traits< TA >::operations + 1;
-            };
-            template < typename TA >
-            struct Traits< CeilExp< TA > > : Traits< TA >
-            {
-                typedef decltype( std::ceil( typename Traits< TA >::return_type(0) ) ) return_type;
-                constexpr const static bool catch_reference = false;
-                constexpr const static int operations = Traits< TA >::operations + 1;
-            };
-            template < typename TA >
-            struct Traits< RoundExp< TA > > : Traits< TA >
-            {
-                typedef decltype( std::round( typename Traits< TA >::return_type(0) ) ) return_type;
-                constexpr const static bool catch_reference = false;
-                constexpr const static int operations = Traits< TA >::operations + 1;
-            };
 
 
             template < typename TA , IndexType M , IndexType N >

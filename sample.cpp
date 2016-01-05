@@ -19,6 +19,16 @@ using vec = mat< MEMBER_TYPE , SIZE  , 1 >;
 
 int main()
 {
+    {
+        vec< float , 2 > v1( 0 , 1 );
+        vec< float , 2 > v2( 1 , 2 );
+        vec< float , 2 > v3 = ( v1 * 4 ) * v2;
+
+        v3.Log();
+
+        //v3.Log();
+    }
+
     // 2 by 3 matrix
     // column-major,
     // ( 0 , 2 , 3 )
@@ -54,20 +64,44 @@ int main()
     v5.Log();
     v5.FillAggressive( 7.0f , v3 , 8.0f );
     v5.Log();
+    v5.Convert< unsigned int >();
 
-    vec< float , 2 > vv1( 0 , 0 );
-    vec< float , 2 > vv2( 1 , 1 );
-    vec< float , 2 > vv3( 2 , 2 );
-    // aggressive assign for matrix;
-    // each components must fill whole COLUMN
-    mat< float , 2 , 3 > mm1( vv1 , vv2 , vv3 );
-    mm1.Log();
+    /*
+     * for Matrix Aggressive assign;
+     *
+     * it will recursively fill given matrix column-ward
+     *  - must fill bottom first to go right
+     *
+     * example )
+     * m1 = 3 x 3
+     * v1 = 3 x 1
+     * v2 = 1 x 3
+     * s1 = scalar
+     *
+     * m2 = 4 x 4
+     *
+     * m2( m1 , v2 , v1 , s1 )
+     * m2 will be assigned as
+     * ( m1 m1 m1 v1 )
+     * ( m1 m1 m1 v1 )
+     * ( m1 m1 m1 v1 )
+     * ( v2 v2 v2 s1 )
+     *
+     *
+     */
+    {
+        mats< float , 3 > m1 = 3;
+        vec< float , 3 > v1 = 4;
+        mat< float , 1 , 3 > v2 = { 0 , 1 , 2 };
+        mats< float , 4 > m4( m1 , v2 , v1 , 3 );
+        m4.Log();
+    }
 
     // EXP::has_same_root( matrix_type )
     // returns true if Expression
     // contains expression of matrix_type
     auto exp = (( v1 * v3 + 2 ) / v3);
-    std::cout << exp.has_same_root( v1 );   // should returns true for v1 & v3
+    //std::cout << exp.has_same_root( v1 );   // should returns true for v1 & v3
 
     // general matrix multiply;
     // ( 2x3 multipy 3x2 = 2x2 )
@@ -104,12 +138,10 @@ int main()
     v1 += 3;
     // so on...
 
-
     // vector-vector multiply
     // apply operations to each component
     v1 = v1 * v3;       // v1[0] = v1[0] * v2[0] , v1[1] = v1[1] * v2[1]
     v1 = v1 / v3;
-
 
     // proxy expression Diagonal();
     m2.Diagonal() += { 0 , 1 };
@@ -119,13 +151,11 @@ int main()
     // proxy
     // Row & Column
     m2.Column( 1 )  *= { 2 , 2 };
-    // m2.template Column< 1 >(); -> compile-time
     m2.Row( 0 )     *= 2;
-    // m2.template Row< 0 >();    -> compile-time
 
     // proxy
-    //                          X   Y   M   N
-    m2 = m2.template SubMatrix< 0 , 0 , 2 , 2 >();
+    //                          M   N    X   Y
+    m2 = m2.template SubMatrix< 2 , 2 >( 0 , 0 );
 
     // some functions implemented
     m2 = EH::Matrix::floor( m2 );
@@ -147,7 +177,7 @@ int main()
     auto bits3 = m2 == m2.Transpose();      // bits3 is expression type
     // implict-conversion
     std::bitset< 4 > stdbits = bits3;       // implict-conversion to std::bitset
-    decltype( bits3 )::stdbitset stdbits2 = bits3;
+    auto stdbits2 = bits3.bitset();
 
     mat< bool , 2 , 2 > boolmat = bits3;    // assign to bool-matrix
 

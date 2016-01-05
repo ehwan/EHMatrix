@@ -28,24 +28,22 @@ namespace EH
             template < typename CLS >
             _ehm_inline void operator += ( const Expression::expression_size_type< CLS , M , 1 >& exp )
             {
-                static_cast< THIS& >( *this ).Plus( typename Expression::AssignShouldMakeTemp< THIS , CLS >::type( exp ) );
+                static_cast< THIS& >( *this ).PlusAggressive( typename Expression::AssignShouldMakeTemp< THIS , CLS >::type( exp ) );
             }
             template < typename CLS >
             _ehm_inline void operator -= ( const Expression::expression_size_type< CLS , M , 1 >& exp )
             {
-                static_cast< THIS& >( *this ).Minus( typename Expression::AssignShouldMakeTemp< THIS , CLS >::type( exp ) );
+                static_cast< THIS& >( *this ).MinusAggressive( typename Expression::AssignShouldMakeTemp< THIS , CLS >::type( exp ) );
             }
-            template < typename LST_TYPE >
             _ehm_inline
             void
-            operator += ( std::initializer_list< LST_TYPE > lst )
+            operator += ( std::initializer_list< T > lst )
             {
                 static_cast< THIS& >( *this ).Plus( lst.begin() , lst.end() );
             }
-            template < typename LST_TYPE >
             _ehm_inline
             void
-            operator -= ( std::initializer_list< LST_TYPE > lst )
+            operator -= ( std::initializer_list< T > lst )
             {
                 static_cast< THIS& >( *this ).Minus( lst.begin() , lst.end() );
             }
@@ -62,24 +60,22 @@ namespace EH
             template < typename CLS >
             _ehm_inline void operator *= ( const Expression::expression_size_type< CLS , M , 1 >& v )
             {
-                static_cast< THIS& >( *this ).Multiply( typename Expression::AssignShouldMakeTemp< THIS , CLS >::type( v ) );
+                static_cast< THIS& >( *this ).MultiplyAggressive( typename Expression::AssignShouldMakeTemp< THIS , CLS >::type( v ) );
             }
             template < typename CLS >
             _ehm_inline void operator /= ( const Expression::expression_size_type< CLS , M , 1 >& v )
             {
-                static_cast< THIS& >( *this ).Divide( typename Expression::AssignShouldMakeTemp< THIS , CLS >::tpye( v ) );
+                static_cast< THIS& >( *this ).DivideAggressive( typename Expression::AssignShouldMakeTemp< THIS , CLS >::tpye( v ) );
             }
-            template < typename LST_TYPE >
             _ehm_inline
             void
-            operator *= ( std::initializer_list< LST_TYPE > lst )
+            operator *= ( std::initializer_list< T > lst )
             {
                 static_cast< THIS& >( *this ).Multiply( lst.begin() , lst.end() );
             }
-            template < typename LST_TYPE >
             _ehm_inline
             void
-            operator /= ( std::initializer_list< LST_TYPE > lst )
+            operator /= ( std::initializer_list< T > lst )
             {
                 static_cast< THIS& >( *this ).Divide( lst.begin() , lst.end() );
             }
@@ -87,19 +83,17 @@ namespace EH
             template < typename EXP_CLS >
             _ehm_inline void operator = ( const Expression::Expression< EXP_CLS >& m )
             {
-                static_cast< THIS& >( *this ).Fill( typename Expression::AssignShouldMakeTemp< THIS , EXP_CLS >::type( m ) );
+                static_cast< THIS& >( *this ).FillAggressive( typename Expression::AssignShouldMakeTemp< THIS , EXP_CLS >::type( m ) );
             }
-            template < typename LST_TYPE >
             _ehm_inline
             void
-            operator = ( std::initializer_list< LST_TYPE > lst )
+            operator = ( std::initializer_list< T > lst )
             {
                 static_cast< THIS& >( *this ).Fill( lst.begin() , lst.end() );
             }
-            template < typename SCALAR_TYPE >
             _ehm_inline
-            typename std::enable_if< Expression::is_scalar< SCALAR_TYPE >::value >::type
-            operator = ( const SCALAR_TYPE a )
+            void
+            operator = ( const T a )
             {
                 static_cast< THIS& >( *this ).Fill( a );
             }
@@ -167,28 +161,52 @@ namespace EH
             operator + ( const expression_size_type< TA , 0 , 1 >& v ,
                          const ret_type< TA > s )
             {
-                return Plus< TA , ret_type< TA > >( v , s );
+                return UnaryExp< TA >(
+                        v ,
+                        [ s ]( const auto x )
+                        {
+                            return x + s;
+                        }
+                    );
             }
             template < typename TA , typename = void >
             auto
             operator - ( const expression_size_type< TA , 0 , 1 >& v ,
                          const ret_type< TA > s )
             {
-                return Plus< TA , ret_type< TA > >( v , -s );
+                return UnaryExp< TA >(
+                        v ,
+                        [ s ]( const auto x )
+                        {
+                            return x - s;
+                        }
+                    );
             }
             template < typename TA , typename = void >
             auto
             operator + ( const ret_type< TA > s ,
                          const expression_size_type< TA , 0 , 1 >& v )
             {
-                return Plus< ret_type< TA > , TA >( s , v );
+                return UnaryExp< TA >(
+                        v ,
+                        [ s ]( const auto x )
+                        {
+                            return x + s;
+                        }
+                    );
             }
             template < typename TA , typename = void >
             auto
             operator - ( const ret_type< TA > s ,
                          const expression_size_type< TA , 0 , 1 >& v )
             {
-                return Plus< ret_type< TA > , NegativeTo< TA > >( s , v.Negative() );
+                return UnaryExp< TA >(
+                        v ,
+                        [ s ]( const auto x )
+                        {
+                            return x - s;
+                        }
+                    );
             }
 
             template < typename TA , typename TB ,
@@ -197,7 +215,13 @@ namespace EH
             operator * ( const expression_size_type< TA , M , 1 >& v1 ,
                          const expression_size_type< TB , M , 1 >& v2 )
             {
-                return Multiply< TA , TB >( v1 , v2 );
+                return BinaryExp< TA , TB >(
+                        v1 , v2 ,
+                        []( const auto x , const auto y )
+                        {
+                            return x * y;
+                        }
+                        );
             }
             template < typename TA , typename TB ,
                        IndexType M = Traits< TA >::rows >
@@ -205,7 +229,13 @@ namespace EH
             operator / ( const expression_size_type< TA , M , 1 >& v1 ,
                          const expression_size_type< TB , M , 1 >& v2 )
             {
-                return Divide< TA , TB >( v1 , v2 );
+                return BinaryExp< TA , TB >(
+                        v1 , v2 ,
+                        []( const auto x , const auto y )
+                        {
+                            return x / y;
+                        }
+                    );
             }
         };  // namespace Expression
 
@@ -223,18 +253,26 @@ namespace EH
         Cross( const Expression::expression_size_type< TA , 2 , 1 >& v ,
                const Expression::ret_type< TA > a )
         {
-            return Expression::Multiply<
-                        Expression::OuterProduct< 2 , TA > , Expression::ret_type< TA >
-                        >( Expression::OuterProduct< 2 , TA >( v ) , a );
+            return make_unary_expression(
+                    Expression::OuterProduct< 2 , TA >( v ) ,
+                    [ a ]( const auto x )
+                    {
+                        return x * a;
+                    }
+                );
         }
         template < typename TA >
         auto
         Cross( const Expression::ret_type< TA > a ,
                const Expression::expression_size_type< TA , 2 , 1 >& v )
         {
-            return Expression::Multiply<
-                        Expression::OuterProduct< 2 , TA > , Expression::ret_type< TA >
-                        >( Expression::OuterProduct< 2 , TA >( v ) , -a );
+            return Expression::UnaryExp< Expression::OuterProduct< 2 , TA > >(
+                    Expression::OuterProduct< 2 , TA >( v ) ,
+                    [ a ]( const auto x )
+                    {
+                        return - x * a;
+                    }
+                );
         }
         template < typename TA >
         auto

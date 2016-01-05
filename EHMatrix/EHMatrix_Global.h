@@ -6,8 +6,6 @@
 #include <iostream>
 //#include "../EHLog.h"
 
-//#define FMA_OPTIMIZATION 1
-
 #define MAKE_SIGNED(x) (int)( 1 | ( (x)-1 ) )
 
 #define ENABLE_ERROR_EXPRESSION true

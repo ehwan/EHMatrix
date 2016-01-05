@@ -1,10 +1,7 @@
 #pragma once
 
 #include "EHMatrix_Global.h"
-//#include "EHMatrix_iterator.h"
-//#include "EHMatrix_container.h"
 #include "EHMatrix_Expression.h"
-//#include "EHMatrix_bitset.h"
 #include "Aliased_container.h"
 
 #include <type_traits>
@@ -31,18 +28,18 @@ namespace EH
             template < typename CLS >
             void operator *= ( const Expression::expression_size_type< CLS , N , N >& m )
             {
-                static_cast< THIS& >( *this ).Fill( Expression::mat_type< THIS >( static_cast< const THIS& >( *this ) * m ) );
+                static_cast< THIS& >( *this ).FillAggressive( Expression::mat_type< THIS >( static_cast< const THIS& >( *this ) * m ) );
             }
 
             template < typename CLS >
             _ehm_inline void operator += ( const Expression::expression_size_type< CLS , M , N >& exp )
             {
-                static_cast< THIS& >( *this ).Plus( typename Expression::AssignShouldMakeTemp< THIS , CLS >::type( exp ) );
+                static_cast< THIS& >( *this ).PlusAggressive( typename Expression::AssignShouldMakeTemp< THIS , CLS >::type( exp ) );
             }
             template < typename CLS >
             _ehm_inline void operator -= ( const Expression::expression_size_type< CLS , M , N >& exp )
             {
-                static_cast< THIS& >( *this ).Minus( typename Expression::AssignShouldMakeTemp< THIS , CLS >::type( exp ) );
+                static_cast< THIS& >( *this ).MinusAggressive( typename Expression::AssignShouldMakeTemp< THIS , CLS >::type( exp ) );
             }
             template < typename LST_TYPE >
             _ehm_inline
@@ -62,12 +59,11 @@ namespace EH
             template < typename EXP_CLS >
             _ehm_inline void operator = ( const Expression::Expression< EXP_CLS >& m )
             {
-                static_cast< THIS& >( *this ).Fill( typename Expression::AssignShouldMakeTemp< THIS , EXP_CLS >::type( m ) );
+                static_cast< THIS& >( *this ).FillAggressive( typename Expression::AssignShouldMakeTemp< THIS , EXP_CLS >::type( m ) );
             }
-            template < typename LST_TYPE >
             _ehm_inline
             void
-            operator = ( std::initializer_list< LST_TYPE > lst )
+            operator = ( std::initializer_list< T > lst )
             {
                 static_cast< THIS& >( *this ).Fill( lst.begin() , lst.end() );
             }
@@ -101,7 +97,7 @@ namespace EH
             }
             _ehm_inline T& Get( IndexType x , IndexType y )
             {
-                return Matrix_aliased_container< T , M , N >::s[ y ];
+                return Matrix_aliased_container< T , M , N >::s[ x*M + y ];
             }
             _ehm_inline T operator [] ( IndexType i ) const
             {
@@ -109,23 +105,19 @@ namespace EH
             }
             _ehm_inline T Get( IndexType x , IndexType y ) const
             {
-                return Matrix_aliased_container< T , M , N >::s[ y ];
+                return Matrix_aliased_container< T , M , N >::s[ x*M + y ];
             }
 
             // default constructor; does nothing
             Matrix(){}
 
-            // copy constructor
-            template < typename CLS >
-            Matrix( const Expression::expression_size_type< CLS , M , N >& exp )
+            template < typename ... Ts ,
+                       typename = typename std::enable_if< Expression::AggressiveSize< Ts... >::value == M*N >::type >
+            Matrix( Ts&& ... args )
             {
-                parent::Fill( exp );
-            }
-
-            template < typename T0 , typename T1 , typename ... Ts >
-            explicit Matrix( T0&& arg0 , T1&& arg1 , Ts&& ... args )
-            {
-                parent::FillAggressive( std::template forward< T0 >( arg0 ) , std::template forward< T1 >( arg1 ) ,  std::template forward< Ts >( args )... );
+                parent::FillAggressive(
+                    std::template forward< Ts >( args )...
+                );
             }
 
             // copy from iterator
@@ -135,30 +127,29 @@ namespace EH
                 parent::Fill( begin , end );
             }
             // copy from initializer-list
-            Matrix( std::initializer_list< T > lst )
-            {
-                parent::Fill( lst.begin() , lst.end() );
-            }
+            //Matrix( std::initializer_list< T > lst )
+            //{
+                //parent::Fill( lst.begin() , lst.end() );
+            //}
 
             // for square-matrix
             // vector assign
             // fill diagonal vector with parameter 'v'
             // else fill 0
-            template < typename SFINE = Matrix< T , M , N > , typename CLS ,
-                       IndexType M2 = Expression::Traits< SFINE >::rows ,
-                       IndexType N2 = Expression::Traits< SFINE >::cols ,
+            template < typename CLS ,
+                       IndexType M2 = M ,
+                       IndexType N2 = N ,
                        typename = typename std::enable_if< M2==N2 >::type >
             Matrix( const Expression::expression_size_type< CLS , M , 1 >& v )
             {
                 parent::Fill( 0 );
-                parent::Diagonal().Fill( v );
+                parent::Diagonal().FillAggressive( v );
             }
 
             // square matrix scalar assign
             // same as function above
-            template < typename SFINE = Matrix< T , M , N > ,
-                       IndexType M2 = Expression::Traits< SFINE >::rows ,
-                       IndexType N2 = Expression::Traits< SFINE >::cols ,
+            template < IndexType M2 = M ,
+                       IndexType N2 = N ,
                        typename = typename std::enable_if< M2==N2 >::type >
             Matrix( const T sc )
             {
@@ -168,13 +159,16 @@ namespace EH
 
             // vector scalar assign
             // fill with given scalar
-            template < typename SFINE = Matrix< T , M , N > , typename = void ,
-                       IndexType M2 = Expression::Traits< SFINE >::rows ,
-                       IndexType N2 = Expression::Traits< SFINE >::cols ,
+            template < IndexType N2 = N ,
                        typename = typename std::enable_if< N2==1 >::type >
             Matrix( const T sc )
             {
                 parent::Fill( sc );
+            }
+
+            Matrix( std::initializer_list< T > lst )
+            {
+                parent::Fill( lst.begin() , lst.end() );
             }
 
             EXPRESSION_ASSIGN_OPERATOR( parent )
@@ -297,7 +291,13 @@ namespace EH
             operator + ( const expression_size_type< TA , M , N >& a ,
                          const expression_size_type< TB , M , N >& b )
             {
-                return Plus< TA , TB >( a , b );
+                return BinaryExp< TA , TB >(
+                        a , b ,
+                        []( const auto x , const auto y )
+                        {
+                            return x + y;
+                        }
+                    );
             }
             // general minus operator
             template < typename TA , typename TB ,
@@ -307,18 +307,30 @@ namespace EH
             operator - ( const expression_size_type< TA , M , N >& a ,
                          const expression_size_type< TB , M , N >& b )
             {
-                return Plus< TA , NegativeTo< TB > >( a , b.Negative() );
+                return BinaryExp< TA , TB >(
+                        a , b ,
+                        []( const auto x , const auto y )
+                        {
+                            return x - y;
+                        }
+                    );
             }
 
             // general scalar scale
             template < typename TA , typename TB ,
                        typename = typename std::enable_if<
-                           std::is_arithmetic< TA >::value
+                           is_scalar< TA >::value
                            >::type >
             auto operator * ( const TA s ,
                               const Expression< TB >& m )
             {
-                return Multiply< TA , TB >( s , m );
+                return UnaryExp< TB >(
+                        m ,
+                        [ s ]( const auto x )
+                        {
+                            return x * s;
+                        }
+                    );
             }
             // general scalar scale
             template < typename TA , typename TB ,
@@ -328,7 +340,13 @@ namespace EH
             auto operator * ( const Expression< TB >& m ,
                               const TA s )
             {
-                return Multiply< TB , TA >( m , s );
+                return UnaryExp< TB >(
+                        m ,
+                        [ s ]( const auto x )
+                        {
+                            return x * s;
+                        }
+                    );
             }
 
             // general scalar scale
@@ -339,7 +357,13 @@ namespace EH
             auto operator / ( const Expression< TB >& m ,
                               const TA s )
             {
-                return Divide< TB , TA >( m , s );
+                return UnaryExp< TB >(
+                        m ,
+                        [ s ]( const auto x )
+                        {
+                            return x / s;
+                        }
+                    );
             }
 
             template < typename TA , typename TB ,
@@ -349,86 +373,51 @@ namespace EH
                               const expression_size_type< TB , N , 1 >& v )
             {
                 auto submat = m.template SubMatrix< M , N >( 0 , 0 );
-                auto col = m.template Column( N );
-                return Plus< MatMatMult< remove_cr< decltype( submat ) > , TB > , remove_cr< decltype( col ) > >
-                    (
-                        MatMatMult< remove_cr< decltype( submat ) > , TB >( submat , v ) ,
-                        col
+                auto col = m.Column( N );
+
+                return BinaryExp< decltype( submat ) , decltype( col ) >(
+                        submat , col ,
+                        []( const auto x , const auto y )
+                        {
+                            return x + y;
+                        }
                     );
             }
         };  // namespace Expression
-
-        ////specialize last component is 1
-        ////offset matrix multiplying
-        //template < typename T1 , typename T2 , IndexType M , IndexType N , IndexType N2 ,
-            //typename = typename std::enable_if< CHECK_TYPE_VALUE(T1)&&CHECK_TYPE_VALUE(T2) > >
-        //BaseMatrix< typename std::common_type< T1 , T2 >::type , M , N2 > operator * ( const BaseMatrix< T1 , M , N+1 >& m1 , const BaseMatrix< T2 , N , N2 >& m2 );
 
 
         template < typename CLS >
         _ehm_inline auto floor( const Expression::Expression< CLS >& exp )
         {
-            return Expression::FloorExp< CLS >( exp );
+            return Expression::UnaryExp< CLS >(
+                    exp ,
+                    []( const auto x )
+                    {
+                        return std::floor( x );
+                    }
+                );
         }
         template < typename CLS >
         _ehm_inline auto ceil( const Expression::Expression< CLS >& exp )
         {
-            return Expression::CeilExp< CLS >( exp );
+            return Expression::UnaryExp< CLS >(
+                    exp ,
+                    []( const auto x )
+                    {
+                        return std::ceil( x );
+                    }
+                );
         }
         template < typename CLS >
         _ehm_inline auto round( const Expression::Expression< CLS >& exp )
         {
-            return Expression::RoundExp< CLS >( exp );
+            return Expression::UnaryExp< CLS >(
+                    exp ,
+                    []( const auto x )
+                    {
+                        return std::round( x );
+                    }
+                );
         }
-
-
-
-        //template < typename T >
-        //T Det( const BaseMatrix< T , 2 , 2 >& m );
-        //template < typename T >
-        //T Det( const BaseMatrix< T , 3 , 3 >& m );
-        //template < typename T , IndexType N >
-        //T Det( const BaseMatrix< T , N , N >& m );
-
-        template < typename TA , typename TB , typename TC ,
-                 typename = typename std::enable_if<
-                     Expression::Traits< TA >::cols == 1 &&
-                     Expression::Traits< TA >::cols == Expression::Traits< TB >::cols &&
-                     Expression::Traits< TC >::cols == Expression::Traits< TB >::cols &&
-                     Expression::Traits< TA >::rows == Expression::Traits< TB >::rows &&
-                     Expression::Traits< TC >::rows == Expression::Traits< TB >::rows
-                     >::type >
-        auto fma( const Expression::Expression< TA >& v1 ,
-                  const Expression::Expression< TB >& v2 ,
-                  const Expression::Expression< TC >& v3 )
-        {
-            return Expression::FMA< TA , TB , TC >( v1 , v2 , v3 );
-        }
-        template < typename TA , typename TB ,
-                 typename = typename std::enable_if<
-                     Expression::Traits< TA >::cols == 1 &&
-                     Expression::Traits< TA >::cols == Expression::Traits< TB >::cols &&
-                     Expression::Traits< TA >::rows == Expression::Traits< TB >::rows
-                     >::type >
-        auto fma( const Expression::Expression< TA >& v1 ,
-                  const Expression::Expression< TB >& v2 ,
-                  const Expression::ret_type< TA > c )
-        {
-            return Expression::FMA< TA , TB , Expression::ret_type< TA > >( v1 , v2 , c );
-        }
-        template < typename TA , typename TC ,
-                 typename = typename std::enable_if<
-                     Expression::Traits< TA >::cols == 1 &&
-                     Expression::Traits< TA >::cols == Expression::Traits< TC >::cols &&
-                     Expression::Traits< TA >::rows == Expression::Traits< TC >::rows
-                     >::type >
-        auto fma( const Expression::Expression< TA >& v1 ,
-                  const Expression::ret_type< TA > b ,
-                  const Expression::Expression< TC >& v3 )
-        {
-            return Expression::FMA< TA , Expression::ret_type< TA > , TC >( v1 , b , v3 );
-        }
-
-
     };  // namespace Matrix
 };  //namespace EH

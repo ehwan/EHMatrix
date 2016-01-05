@@ -116,6 +116,21 @@ namespace EH
                 typedef typename Traits< T0 >::root_type root_type;
             };
 
+            template < typename ... Ts >
+            struct AggressiveSize;
+
+            template <>
+            struct AggressiveSize<>
+            {
+                constexpr const static IndexType value = 0;
+            };
+            template < typename T0 , typename ... Ts >
+            struct AggressiveSize< T0 , Ts... >
+            {
+                constexpr const static IndexType value =
+                    Traits< T0 >::rows * Traits< T0 >::cols + AggressiveSize< Ts... >::value;
+            };
+
             // bit mask of conditional expression
             // choose whick attribute to compare;
             struct exm
