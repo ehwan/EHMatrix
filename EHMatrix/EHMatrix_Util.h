@@ -16,21 +16,20 @@ namespace EH
             auto FirstOrderMatrix( const Expression::expression_size_type< TA , N , 1 >& a ,
                                    const Expression::expression_size_type< TB , N , 1 >& b )
             {
+                using Expression::GetBy;
+                using Expression::GetByRef;
                 // if OutN is 0 , automatically fit the least number
                 constexpr const IndexType Out = ( OutN==0 ? N+1 : OutN );
                 static_assert( (Out > N) , "dimension of out matrix is not fit" );
 
                 typedef typename std::common_type< Expression::ret_type< TA > , Expression::ret_type< TB > >::type retT;
 
-                Matrix< retT , Out , Out > ret;
-                ret.template Fill< retT >( 0 );
+                Matrix< retT , Out , Out > ret( 1 );
 
-                auto& diag = ret.Diagonal();
-                auto& col  = ret.Column( Out-1 );
                 for( IndexType i=0; i<N; ++i )
                 {
-                    Expression::GetByRef( diag , 0 , i ) = Expression::GetBy( a , 0 , i );
-                    Expression::GetByRef( col , 0 , i )  = Expression::GetBy( b , 0 , i );
+                    GetByRef( ret , i , i ) = GetBy( a , 0 , i );
+                    GetByRef( ret , Out-1 , i ) = GetBy( b , 0 , i );
                 }
 
                 return ret;
@@ -44,8 +43,8 @@ namespace EH
                                  const Expression::expression_size_type< TD , N , 1 >& tomax )
             {
                 // y = ( x - from_a ) * ( to_b - to_a )/( from_b - from_a ) + to_a;
-                const auto& coeff = ( tomax - tomin ) / ( frommax - frommin );
-                const auto& offset = tomin - coeff * frommin;
+                const auto coeff = ( tomax - tomin ) / ( frommax - frommin );
+                const auto offset = tomin - coeff * frommin;
 
                 // now, y = x * coeff + offset;
                 return FirstOrderMatrix< OutN >( coeff , offset );

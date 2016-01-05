@@ -86,82 +86,39 @@ namespace EH
 
                 // sub-matrix functions
                 //{
-                    _ehm_inline
+                    constexpr _ehm_inline
                     auto
                     Column( IndexType i )
                     {
                         return SubMatrixRuntimeExp< CLS , rows , 1 >( *this , i , 0 );
                     }
-                    _ehm_inline
+                    constexpr _ehm_inline
                     auto
                     Column( IndexType i ) const
                     {
                         return SubMatrixRuntimeExp< typename std::add_const< CLS >::type , rows , 1 >( *this , i , 0 );
                     }
-                    template < IndexType I >
-                    _ehm_inline
-                    auto
-                    Column()
-                    {
-                        return SubMatrixExp< CLS , I , 0 , rows , 1 >( *this );
-                    }
-                    template < IndexType I >
-                    _ehm_inline
-                    auto
-                    Column() const
-                    {
-                        return SubMatrixExp< typename std::add_const< CLS >::type , I , 0 , rows , 1 >( *this );
-                    }
-                    _ehm_inline
+                    constexpr _ehm_inline
                     auto
                     Row( IndexType i )
                     {
                         return SubMatrixRuntimeExp< CLS , 1 , cols >( *this , 0 , i );
                     }
-                    _ehm_inline
+                    constexpr _ehm_inline
                     auto
                     Row( IndexType i ) const
                     {
                         return SubMatrixRuntimeExp< typename std::add_const< CLS >::type , 1 , cols >( *this , 0 , i );
                     }
-                    template < IndexType I >
-                    _ehm_inline
-                    auto
-                    Row()
-                    {
-                        return SubMatrixExp< CLS , 0 , I , 1 , cols >( *this );
-                    }
-                    template < IndexType I >
-                    _ehm_inline
-                    auto
-                    Row() const
-                    {
-                        return SubMatrixExp< typename std::add_const< CLS >::type , 0 , I , 1 , cols >( *this );
-                    }
-
-                    template < IndexType X , IndexType Y , IndexType M , IndexType N >
-                    _ehm_inline
-                    auto
-                    SubMatrix()
-                    {
-                        return SubMatrixExp< CLS , X , Y , M , N >( *this );
-                    }
-                    template < IndexType X , IndexType Y , IndexType M , IndexType N >
-                    _ehm_inline
-                    auto
-                    SubMatrix() const
-                    {
-                        return SubMatrixExp< typename std::add_const< CLS >::type , X , Y , M , N >( *this );
-                    }
                     template < IndexType M ,IndexType N >
-                    _ehm_inline
+                    constexpr _ehm_inline
                     auto
                     SubMatrix( IndexType x , IndexType y )
                     {
                         return SubMatrixRuntimeExp< CLS , M , N >( *this , x , y );
                     }
                     template < IndexType M ,IndexType N >
-                    _ehm_inline
+                    constexpr _ehm_inline
                     auto
                     SubMatrix( IndexType x , IndexType y ) const
                     {

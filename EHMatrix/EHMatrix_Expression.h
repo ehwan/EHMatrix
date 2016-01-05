@@ -77,8 +77,6 @@ namespace EH
             // else copy from given matrix
             template < typename TA , IndexType M , IndexType N >
             struct GeneralResize;
-            template < typename TA , IndexType X , IndexType Y , IndexType M , IndexType N >
-            struct SubMatrixExp;
             template < typename TA , IndexType M , IndexType N >
             struct SubMatrixRuntimeExp;
             template < typename TA >
@@ -685,61 +683,6 @@ namespace EH
                 constexpr const static bool catch_reference = false;
             };
 
-            template < typename TA , IndexType X , IndexType Y , IndexType M , IndexType N >
-            struct SubMatrixExp :
-                Expression< SubMatrixExp< TA , X , Y , M , N > >
-            {
-                static_assert( (X >= 0) && (X+N <= Traits< TA >::cols) , "Invalid width structure" );
-                static_assert( (Y >= 0) && (Y+M <= Traits< TA >::rows) , "Invalid height structure" );
-
-                auto_reference< TA > a;
-
-                SubMatrixExp( auto_reference< TA > _a ) :
-                    a( _a )
-                {
-                }
-                template < typename T2 , IndexType M2 , IndexType N2 >
-                constexpr _ehm_inline bool has_same_root( const Matrix< T2 , M2 , N2 >& ptr ) const
-                {
-                    return HasSameRoot( a , ptr );
-                }
-
-                _ehm_inline ret_type< TA >& operator [] ( IndexType i )
-                {
-                    return GetByRef( a , i + X*Traits< TA >::rows );
-                }
-                _ehm_inline ret_type< TA >& Get( IndexType x , IndexType y )
-                {
-                    return GetByRef( a , x + X , y + Y );
-                }
-                _ehm_inline ret_type< TA > operator [] ( IndexType i ) const
-                {
-                    return GetBy( a , i  + X*Traits< TA >::rows );
-                }
-                _ehm_inline ret_type< TA > Get( IndexType x , IndexType y ) const
-                {
-                    return GetBy( a , x + X , y + Y );
-                }
-
-                typedef Expression< SubMatrixExp< TA , X , Y , M , N > > parent;
-                EXPRESSION_ASSIGN_OPERATOR( parent );
-            };
-            template < typename TA , IndexType X , IndexType Y , IndexType M , IndexType N >
-            struct Traits< SubMatrixExp< TA , X , Y , M , N > > : Traits< TA >
-            {
-                // case it's index accessable;
-                //   -original is index accessable AND
-                //      -original is vector type
-                //      -same M( rows count ) as original
-
-                constexpr const static bool is_gettable = Traits< TA >::is_gettable ||
-                    ( M != Traits< TA >::rows && is_vector< TA >::value == false );
-                constexpr const static bool is_restrict = false;
-                constexpr const static IndexType cols = N;
-                constexpr const static IndexType rows = M;
-                constexpr const static bool catch_reference = false;
-            };
-
             template < typename TA , IndexType M , IndexType N >
             struct SubMatrixRuntimeExp :
                 Expression< SubMatrixRuntimeExp< TA , M , N > >
@@ -748,7 +691,7 @@ namespace EH
                 const IndexType X;
                 const IndexType Y;
 
-                SubMatrixRuntimeExp( auto_reference< TA > _a , const IndexType _x , const IndexType _y ) :
+                constexpr SubMatrixRuntimeExp( auto_reference< TA > _a , const IndexType _x , const IndexType _y ) :
                     a( _a ) , X( _x ) , Y( _y )
                 {
                 }
@@ -758,19 +701,19 @@ namespace EH
                 {
                     return HasSameRoot( a , ptr );
                 }
-                _ehm_inline ret_type< TA >& operator [] ( IndexType i )
+                constexpr _ehm_inline ret_type< TA >& operator [] ( IndexType i )
                 {
                     return GetByRef( a , i + X*Traits< TA >::rows );
                 }
-                _ehm_inline ret_type< TA >& Get( IndexType x , IndexType y )
+                constexpr _ehm_inline ret_type< TA >& Get( IndexType x , IndexType y )
                 {
                     return GetByRef( a , x + X , y + Y );
                 }
-                _ehm_inline ret_type< TA > operator [] ( IndexType i ) const
+                constexpr _ehm_inline ret_type< TA > operator [] ( IndexType i ) const
                 {
                     return GetBy( a , i  + X*Traits< TA >::rows );
                 }
-                _ehm_inline ret_type< TA > Get( IndexType x , IndexType y ) const
+                constexpr _ehm_inline ret_type< TA > Get( IndexType x , IndexType y ) const
                 {
                     return GetBy( a , x + X , y + Y );
                 }

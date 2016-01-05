@@ -122,10 +122,10 @@ namespace EH
                 parent::Fill( exp );
             }
 
-            template < typename T0 , typename ... Ts >
-            explicit Matrix( T0&& arg0 , Ts&& ... args )
+            template < typename T0 , typename T1 , typename ... Ts >
+            explicit Matrix( T0&& arg0 , T1&& arg1 , Ts&& ... args )
             {
-                parent::FillAggressive( std::template forward< T0 >( arg0 ) , std::template forward< Ts >( args )... );
+                parent::FillAggressive( std::template forward< T0 >( arg0 ) , std::template forward< T1 >( arg1 ) ,  std::template forward< Ts >( args )... );
             }
 
             // copy from iterator
@@ -348,8 +348,8 @@ namespace EH
             auto operator * ( const expression_size_type< TA , M , N+1 >& m ,
                               const expression_size_type< TB , N , 1 >& v )
             {
-                auto submat = m.template SubMatrix< 0 , 0 , M , N >();
-                auto col = m.template Column< N >();
+                auto submat = m.template SubMatrix< M , N >( 0 , 0 );
+                auto col = m.template Column( N );
                 return Plus< MatMatMult< remove_cr< decltype( submat ) > , TB > , remove_cr< decltype( col ) > >
                     (
                         MatMatMult< remove_cr< decltype( submat ) > , TB >( submat , v ) ,
