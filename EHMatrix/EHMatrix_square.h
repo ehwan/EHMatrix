@@ -183,48 +183,6 @@ namespace EH
             }
         };  // namespace Expression
 
-        namespace Expression
-        {
-            // TA is square matrix;
-            // TB is vector, or scalar
-            template < typename TA , typename TB >
-            struct SquarePlus :
-                Expression< SquarePlus< TA , TB > >
-            {
-                constexpr const static int log2 = std::log2( Traits< TA >::cols + 1 );
-
-                auto_creference< TA > a;
-                auto_creference< TB > b;
-
-                SquarePlus( auto_creference< TA > _a , auto_creference< TB > _b ) :
-                    a( _a ) , b( _b )
-                {
-                }
-                template < typename T2 , IndexType M2 , IndexType N2 >
-                constexpr _ehm_inline bool has_same_root( const Matrix< T2 , M2 , N2 >& ptr ) const
-                {
-                    return HasSameRoot( a , ptr ) || HasSameRoot( b , ptr );
-                }
-
-                _ehm_inline ret_type< TA > operator [] ( IndexType i ) const
-                {
-                    return GetBy( a , i ) + ( (i&Traits< TA >::cols) == 0 )*GetBy( b , i >> log2 );
-                }
-                _ehm_inline ret_type< TA > Get ( IndexType x , IndexType y ) const
-                {
-                    return GetBy( a , x , y ) + ( x == y )*GetBy( b , 0 , x );
-                }
-            };
-            template < typename TA , typename TB >
-            struct Traits< SquarePlus< TA , TB > > : TraitsCombine< TA , TB >
-            {
-                // can use index if ( n + 1 ) is power of two
-                constexpr const static bool is_gettable =
-                    Traits< TA >::is_gettable || Traits< TB >::is_gettable || (Traits< TA >::cols&(Traits< TA >::cols+1))!=0;
-                constexpr const static bool catch_reference = false;
-            };
-        };  // namespace Expression
-
         template < typename TA >
         typename std::enable_if< Expression::Traits< TA >::rows == 2 && Expression::Traits< TA >::cols == 2 ,
                  typename Expression::Traits< TA >::return_type >::type

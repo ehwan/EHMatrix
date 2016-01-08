@@ -297,46 +297,5 @@ namespace EH
                 }
             };
         }
-
-        namespace Expression
-        {
-            template < typename T >
-            struct OuterProduct< 2 , T > :
-                Expression< OuterProduct< 2 , T > >
-            {
-                auto_creference< T > a;
-
-                OuterProduct( auto_creference< T > _a ) :
-                    a( _a )
-                {
-                }
-
-                template < typename T2 , IndexType M2 , IndexType N2 >
-                constexpr _ehm_inline bool has_same_root( const Matrix< T2 , M2 , N2 >& ptr ) const
-                {
-                    return HasSameRoot( a , ptr );
-                }
-                //    0       1
-                // { v[1] , -v[0] }
-                _ehm_inline ret_type< T > operator [] ( IndexType i ) const
-                {
-                    return -GetBy( a , i==0 ) * MAKE_SIGNED( i );
-                }
-                _ehm_inline ret_type< T > Get ( IndexType x , IndexType i ) const
-                {
-                    return -GetBy( a , 0 , i==0 ) * MAKE_SIGNED( i );
-                }
-            };
-            template < typename T >
-            struct Traits< OuterProduct< 2 , T > > : Traits< T >
-            {
-                // vecctor type is always not-gettable
-                constexpr const static IndexType cols = 1;
-                constexpr const static IndexType rows = 2;
-                constexpr const static bool is_restrict = false;
-                constexpr const static int operations = Traits< T >::operations + 1;
-                constexpr const static bool catch_reference = false;
-            };
-        }; // namespace Expression
     };  // namespace Matrix
 };  // namespace EH
