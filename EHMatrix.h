@@ -1,12 +1,12 @@
 #pragma once
 
-#include "EHMatrix/EHMatrix_Global.h"
-#include "EHMatrix/EHMatrix_Expression_general.h"
-#include "EHMatrix/EHMatrix_head.h"
+#include "EHMatrix/Global.h"
+#include "EHMatrix/head.h"
+#include "EHMatrix/expression_interface.h"
+#include "EHMatrix/operators.h"
+#include "EHMatrix/bitset.h"
 
 #undef _ehm_inline
+#undef _ehm_const
 #undef MAKE_SIGNED
-#undef EXPRESSION_ASSIGN_EXPRESSION
-#undef EXPRESSION_ASSIGN_LST
-#undef EXPRESSION_ASSIGN_SCALAR
 #undef EXPRESSION_ASSIGN_OPERATOR

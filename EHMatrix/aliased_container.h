@@ -5,14 +5,12 @@ namespace EH
     namespace Matrix
     {
         template < typename T , IndexType M , IndexType N >
-        struct Matrix_aliased_container
+        struct aliased_container
         {
-            T s[ M*N ];
+            T s[ M * N ];
         };
-
-
         template < typename T >
-        struct Matrix_aliased_container< T , 2 , 1 >
+        struct aliased_container< T , 2 , 1 >
         {
             union
             {
@@ -22,7 +20,7 @@ namespace EH
             };
         };
         template < typename T >
-        struct Matrix_aliased_container< T , 3 , 1 >
+        struct aliased_container< T , 3 , 1 >
         {
             union
             {
@@ -32,7 +30,7 @@ namespace EH
             };
         };
         template < typename T , IndexType M >
-        struct Matrix_aliased_container< T , M , 1 >
+        struct aliased_container< T , M , 1 >
         {
             union
             {
@@ -44,7 +42,7 @@ namespace EH
 
 
         template < typename T >
-        struct Matrix_aliased_container< T , 1 , 2 >
+        struct aliased_container< T , 1 , 2 >
         {
             union
             {
@@ -54,7 +52,7 @@ namespace EH
             };
         };
         template < typename T >
-        struct Matrix_aliased_container< T , 1 , 3 >
+        struct aliased_container< T , 1 , 3 >
         {
             union
             {
@@ -64,7 +62,7 @@ namespace EH
             };
         };
         template < typename T , IndexType M >
-        struct Matrix_aliased_container< T , 1 , M >
+        struct aliased_container< T , 1 , M >
         {
             union
             {
@@ -75,7 +73,7 @@ namespace EH
         };
 
         template < typename T >
-        struct Matrix_aliased_container< T , 1 , 1 >
+        struct aliased_container< T , 1 , 1 >
         {
             union
             {

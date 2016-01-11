@@ -4,7 +4,11 @@
 #include <cmath>
 #include <type_traits>
 #include <iostream>
-//#include "../EHLog.h"
+
+// the exxternal libraries
+
+#include "../../EHLog.h"
+#include "../../static_sequence/static_sequence.h"
 
 #define MAKE_SIGNED(x) (int)( 1 | ( (x)-1 ) )
 
@@ -16,17 +20,14 @@
 
 #define _ehm_const constexpr const static
 
-#define EXPRESSION_ASSIGN_OPERATOR(parent_type) \
-    template < typename ASSIGN_TYPE >\
-    _ehm_inline void operator = ( ASSIGN_TYPE&& exp )\
-    {\
-        parent_type::operator = ( std::template forward< ASSIGN_TYPE >( exp ) );\
-    }
-
 namespace EH
 {
     namespace Matrix
     {
+        using EH::LOG::LOG;
+        using EH::LOG::ERROR;
+        using EH::LOG::LOGR;
+
         using IndexType = unsigned int;
 
         //column-based M x N matrix
@@ -36,13 +37,13 @@ namespace EH
         template < typename T , IndexType N >
         using Vector = Matrix< T , N , 1 >;
 
-        template < typename CLS >
+        template < typename CRTP >
         struct Expression;
+        template < typename CRTP >
+        struct WritableExpression;
 
-        template < typename CLS ,
-                   IndexType M  ,
-                   IndexType N >
-        struct Matrix_Interface;
+        template < typename ... Ts >
+        struct expression_traits;
     };  // namespace Matrix;
 };   // namespaec EH
 
