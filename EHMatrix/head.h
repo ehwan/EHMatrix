@@ -112,6 +112,83 @@ namespace EH
             _ehm_const int       operations      = 0;
         };
 
+
+        template < typename TA , typename TB , typename = void >
+        typename std::enable_if<
+            is_expression< TA >::value && is_expression< TB >::value &&
+            is_column_vector< TA >::value && is_column_vector< TB >::value &&
+            vector_size< TA >::value == 2 && vector_size< TB >::value == 2 ,
+            typename expression_traits< TA , TB >::result_type
+        >
+        Cross( TA&& v1 ,
+               TB&& v2 )
+        {
+            return GetBy( v1 , 0 , 0 )*GetBy( v2 , 0 , 1 ) - GetBy( v1 , 0 , 1 )*GetBy( v2 , 0 , 0 );
+        }
+        template < typename TA , typename = typename std::enable_if< is_expression< TA >::value &&
+                                                                     is_vector< TA >::value &&
+                                                                     vector_size< TA >::value == 2
+                                                                   >::type
+                 >
+        auto
+        Cross( TA&& v ,
+               typename expression_traits< TA >::result_type a )
+        {
+            return Expressions::make_unary( Expressions::Vector2Skew< TA >( std::forward< TA >( v ) ) ,
+                    [ a ]( const auto x )
+                    {
+                        return x * a;
+                    }
+                );
+        }
+        template < typename TA , typename = typename std::enable_if< is_expression< TA >::value &&
+                                                                     is_vector< TA >::value &&
+                                                                     vector_size< TA >::value == 2
+                                                                   >::type
+                 >
+        auto
+        Cross( typename expression_traits< TA >::result_type a ,
+               TA&& v )
+        {
+            return Expressions::make_unary( Expressions::Vector2Skew< TA >( std::forward< TA >( v ) ) ,
+                    [ a ]( const auto x )
+                    {
+                        return - x * a;
+                    }
+                );
+        }
+        template < typename TA >
+        typename std::enable_if<
+            is_expression< TA >::value &&
+            is_vector< TA >::value &&
+            vector_size< TA >::value == 2 ,
+            Expressions::Vector2Skew< TA >
+        >::type
+        Cross( TA&& v )
+        {
+            return Expressions::Vector2Skew< TA >( std::forward< TA >( v ) );
+        }
+        template < typename TA , typename TB >
+        typename std::enable_if<
+            is_expression< TA >::value && is_expression< TB >::value &&
+            is_column_vector< TA >::value && is_column_vector< TB >::value &&
+            vector_size< TA >::value == 3 && vector_size< TB >::value == 3 ,
+            Matrix< typename expression_traits< TA , TB >::result_type ,
+                    3 , 3 >
+        >::type
+        Cross( const expression_size_type< TA , 3 , 1 >& _a ,
+               const expression_size_type< TB , 3 , 1 >& _b )
+        {
+            const typename Expressions::ShouldMakeTemp< TA , 2 >::type a( _a );
+            const typename Expressions::ShouldMakeTemp< TB , 2 >::type b( _b );
+            return Vector< typename expression_traits< TA , TB >::result_type , 3 >
+            {
+                GetBy( a , 0 , 1 )*GetBy( b , 0 , 2 ) - GetBy( a , 0 , 2 )*GetBy( b , 0 , 1 ) ,
+                GetBy( a , 0 , 2 )*GetBy( b , 0 , 0 ) - GetBy( a , 0 , 0 )*GetBy( b , 0 , 2 ) ,
+                GetBy( a , 0 , 0 )*GetBy( b , 0 , 1 ) - GetBy( a , 0 , 1 )*GetBy( b , 0 , 0 )
+            };
+        }
+
         template < typename TA ,
                    typename = typename std::enable_if<
                        is_expression< TA >::value

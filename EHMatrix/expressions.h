@@ -253,6 +253,31 @@ namespace EH
             };
 
 
+            template < typename T >
+            struct Vector2Skew :
+                Expression< Vector2Skew< T > >
+            {
+                using typename Expression< Vector2Skew< T > >::result_type;
+                auto_reference< T > a;
+
+                Vector2Skew( auto_reference< T > _a ) :
+                    a( _a )
+                {
+                }
+
+                //    0       1
+                // { v[1] , -v[0] }
+                _ehm_inline result_type Get( IndexType i ) const
+                {
+                    return -GetBy( a , i==0 ) * MAKE_SIGNED( i );
+                }
+                _ehm_inline result_type Get( IndexType x , IndexType i ) const
+                {
+                    return -GetBy( a , 0 , i==0 ) * MAKE_SIGNED( i );
+                }
+            };
+
+
         };  // namespace Expression
 
 
@@ -325,6 +350,14 @@ namespace EH
 
 
             _ehm_const int  operations      = ( tempA::operations + tempB::operations ) * expression_traits< TA >::cols;
+        };
+
+        template < typename T >
+        struct expression_traits< Expressions::Vector2Skew< T > > : expression_traits< T >
+        {
+            _ehm_const bool is_restrict     = false;
+            _ehm_const bool catch_reference = false;
+            _ehm_const int  operations      = expression_traits< T >::operations + 1;
         };
 
 
