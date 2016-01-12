@@ -48,8 +48,7 @@ namespace EH
 
                 auto_reference< TA > a;
 
-                template < typename TT >
-                Diagonal( TT&& _a ) :
+                Diagonal( auto_reference< TA > _a ) :
                     a( _a )
                 {
                 }
@@ -82,8 +81,7 @@ namespace EH
 
                 auto_reference< TA > a;
 
-                template < typename TT >
-                Transpose( TT&& _a ) :
+                Transpose( auto_reference< TA > _a ) :
                     a( _a )
                 {
                 }
@@ -137,8 +135,7 @@ namespace EH
 
                 const IndexType X , Y;
 
-                template < typename TT >
-                SubMatrix( TT&& _a , const IndexType _x , const IndexType _y ) :
+                SubMatrix( auto_reference< TA >  _a , const IndexType _x , const IndexType _y ) :
                     a( _a ) , X( _x ) , Y( _y )
                 {
                 }
@@ -167,23 +164,30 @@ namespace EH
             {
                 using Expression< Vector2Square< TA > >::rows;
                 using Expression< Vector2Square< TA > >::cols;
+                using typename Expression< Vector2Square< TA > >::result_type;
 
                 auto_reference< TA > a;
 
-                template < typename TTA >
-                Vector2Square( TTA&& _a ) :
+                Vector2Square( auto_reference< TA > _a ) :
                     a( _a )
                 {
                 }
 
+                //template < typename TTA >
+                //Vector2Square( TTA&& _a ) :
+                    //a( _a )
+                //{
+                //}
+
                 constexpr _ehm_inline
-                auto
+                result_type
                 Get( IndexType i ) const
                 {
-                    return ( i % ( rows + 1 ) ) == 0 ? GetBy( a , i ) : 0;
+                    constexpr const IndexType pow = std::log2( rows );
+                    return ( i % rows ) == 0 ? GetBy( a , i >> pow ) : 0;
                 }
                 constexpr _ehm_inline
-                auto
+                result_type
                 Get( IndexType x , IndexType y ) const
                 {
                     return x == y ? GetBy( a , y ) : 0;
@@ -200,8 +204,7 @@ namespace EH
                 typename ShouldMakeTemp< const TA , expression_traits< TB >::cols >::type a;
                 typename ShouldMakeTemp< const TB , expression_traits< TA >::rows >::type b;
 
-                template < typename TTA , typename TTB >
-                MatMatMult( TTA&& _a , TTB&& _b ) :
+                MatMatMult( auto_reference< TA > _a , auto_reference< TB > _b ) :
                     a( _a ) , b( _b )
                 {
                 }
@@ -290,6 +293,20 @@ namespace EH
             _ehm_const IndexType cols            = N;
 
             //_ehm_const int       operations      = expression_traits< TA >::operations + 1;
+        };
+
+        template < typename TA >
+        struct expression_traits< Expressions::Vector2Square< TA > > : expression_traits< TA >
+        {
+            _ehm_const bool catch_reference = false;
+            _ehm_const bool is_restrict     = false;
+            _ehm_const bool is_single_index = expression_traits< TA >::is_single_index &&
+                                              ( expression_traits< TA >::rows & ( expression_traits< TA >::rows + 1 ) ) == 0;
+
+            _ehm_const IndexType rows = vector_size< TA >::value;
+            _ehm_const IndexType cols = rows;
+
+            _ehm_const int operations = expression_traits< TA >::operations + 1;
         };
 
 

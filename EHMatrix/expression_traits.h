@@ -36,6 +36,60 @@ namespace EH
             std::integral_constant< bool , expression_traits< T >::is_expression >
         {
         };
+        template < typename TA , typename TB >
+        struct is_same_cols :
+            std::integral_constant<
+                bool ,
+                expression_traits< TA >::cols == expression_traits< TB >::cols
+            >
+        {
+        };
+        template < typename TA , typename TB >
+        struct is_same_rows :
+            std::integral_constant<
+                bool ,
+                expression_traits< TA >::rows == expression_traits< TB >::rows
+            >
+        {
+        };
+        template < typename TA , typename TB >
+        struct is_same_size :
+            std::integral_constant<
+                bool ,
+                is_same_cols< TA , TB >::value && is_same_rows< TA , TB >::value
+            >
+        {
+        };
+        template < typename TA >
+        struct vector_size :
+            std::integral_constant<
+                IndexType ,
+                std::max( expression_traits< TA >::rows , expression_traits< TA >::cols )
+            >
+        {
+        };
+
+        template < typename DST , typename SRC >
+        struct is_assign_restrict
+        {
+            _ehm_const bool value = expression_traits< DST >::is_restrict && expression_traits< SRC >::is_restrict;
+
+            using type = typename std::conditional< value ,
+                                                      typename std::add_lvalue_reference< SRC >::type ,
+                                                      Matrix< typename expression_traits< SRC >::result_type ,
+                                                              expression_traits< SRC >::rows ,
+                                                              expression_traits< SRC >::cols
+                                                            >
+                                                    >::type;
+
+
+        };
+
+        template < typename T >
+        using matrix_type = Matrix< typename expression_traits< T >::result_type ,
+                                    expression_traits< T >::rows ,
+                                    expression_traits< T >::cols >;
+
 
         template < typename T >
         struct expression_traits< T >
@@ -101,6 +155,7 @@ namespace EH
                                     typename std::remove_reference< TA >::type
                                 >::type;
 
+
         template < typename TA >
         typename std::enable_if< is_scalar< TA >::value , typename expression_traits< TA >::result_type >::type
         constexpr _ehm_inline
@@ -128,13 +183,37 @@ namespace EH
         }
         template < typename TA >
         typename std::enable_if<
-            is_expression< TA >::value ,
+            is_expression< TA >::value &&
+            expression_traits< TA >::is_single_index == false ,
+            typename expression_traits< TA >::result_type
+        >::type
+        constexpr _ehm_inline
+        GetBy( TA&& a , IndexType i )
+        {
+            ERROR( "Single-index acces is not valid for this expression" );
+            return a.Get( i );
+        }
+        template < typename TA >
+        typename std::enable_if<
+            is_expression< TA >::value &&
+            expression_traits< TA >::is_single_index == false ,
             typename expression_traits< TA >::result_type
         >::type
         constexpr _ehm_inline
         GetBy( TA&& a , IndexType x , IndexType y )
         {
             return a.Get( x , y );
+        }
+        template < typename TA >
+        typename std::enable_if<
+            is_expression< TA >::value &&
+            expression_traits< TA >::is_single_index ,
+            typename expression_traits< TA >::result_type
+        >::type
+        constexpr _ehm_inline
+        GetBy( TA&& a , IndexType x , IndexType y )
+        {
+            return a.Get( y + x * expression_traits< TA >::rows );
         }
 
 
@@ -143,7 +222,8 @@ namespace EH
 
         template < typename TA >
         typename std::enable_if<
-            is_expression< TA >::value ,
+            is_expression< TA >::value &&
+            expression_traits< TA >::is_single_index ,
             typename expression_traits< TA >::result_type&
         >::type
         constexpr _ehm_inline
@@ -153,7 +233,31 @@ namespace EH
         }
         template < typename TA >
         typename std::enable_if<
-            is_expression< TA >::value ,
+            is_expression< TA >::value &&
+            expression_traits< TA >::is_single_index == false ,
+            typename expression_traits< TA >::result_type&
+        >::type
+        constexpr _ehm_inline
+        RefBy( TA&& a , IndexType i )
+        {
+            ERROR( "single-index access is not valid for this expression" );
+            return a.Ref( i );
+        }
+        template < typename TA >
+        typename std::enable_if<
+            is_expression< TA >::value &&
+            expression_traits< TA >::is_single_index ,
+            typename expression_traits< TA >::result_type&
+        >::type
+        constexpr _ehm_inline
+        RefBy( TA&& a , IndexType x , IndexType y )
+        {
+            return a.Ref( y + x * expression_traits< TA >::rows );
+        }
+        template < typename TA >
+        typename std::enable_if<
+            is_expression< TA >::value &&
+            expression_traits< TA >::is_single_index == false ,
             typename expression_traits< TA >::result_type&
         >::type
         constexpr _ehm_inline

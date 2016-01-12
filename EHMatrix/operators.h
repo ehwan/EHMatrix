@@ -11,38 +11,6 @@ namespace EH
 {
     namespace Matrix
     {
-        namespace functional
-
-        {
-            template < typename T2 >
-            struct Multiply_Unary
-            {
-                T2 s;
-
-                Multiply_Unary( T2 _s ) :
-                    s( _s )
-                {
-                }
-
-                template < typename T1 >
-                typename std::common_type< T1 , T2 >::type
-                _ehm_inline
-                operator()( T1 x ) const
-                {
-                    return x * s;
-                }
-            };
-            template < typename TA , typename TB >
-            struct Multiply_Binary
-            {
-                typename std::common_type< TA , TB >::type
-                _ehm_inline
-                operator() ( TA a , TB b ) const
-                {
-                    return a * b;
-                }
-            };
-        };
         template < typename TA ,
                    typename = typename std::enable_if< is_expression< TA >::value
                                                      >::type
@@ -89,8 +57,7 @@ namespace EH
 
         template < typename TA , typename TB ,
                    typename = typename std::enable_if< is_expression< TA >::value && is_expression< TB >::value &&
-                                                       expression_traits< TA >::cols == expression_traits< TB >::cols &&
-                                                       expression_traits< TA >::rows == expression_traits< TB >::rows
+                                                       is_same_size< TA , TB >::value
                                                      >::type
                  >
         _ehm_inline
@@ -105,8 +72,7 @@ namespace EH
         }
         template < typename TA , typename TB ,
                    typename = typename std::enable_if< is_expression< TA >::value && is_expression< TB >::value &&
-                                                       expression_traits< TA >::cols == expression_traits< TB >::cols &&
-                                                       expression_traits< TA >::rows == expression_traits< TB >::rows
+                                                       is_same_size< TA , TB >::value
                                                      >::type
                  >
         _ehm_inline
@@ -217,8 +183,7 @@ namespace EH
                    typename = typename std::enable_if< is_expression< TA >::value && is_expression< TB >::value &&
                                                        is_vector< TA >::value && is_vector< TB >::value &&
 
-                                                       expression_traits< TA >::cols == expression_traits< TB >::cols &&
-                                                       expression_traits< TA >::rows == expression_traits< TB >::rows
+                                                       is_same_size< TA , TB >::value
                                                      >::type
                  >
         _ehm_inline
@@ -236,8 +201,7 @@ namespace EH
                    typename = typename std::enable_if< is_expression< TA >::value && is_expression< TB >::value &&
                                                        is_vector< TA >::value && is_vector< TB >::value &&
 
-                                                       expression_traits< TA >::cols == expression_traits< TB >::cols &&
-                                                       expression_traits< TA >::rows == expression_traits< TB >::rows
+                                                       is_same_size< TA , TB >::value
                                                      >::type
                  >
         _ehm_inline
@@ -247,6 +211,74 @@ namespace EH
                     []( auto a , auto b )
                     {
                         return a / b;
+                    }
+                );
+        }
+
+        template < typename TA , typename TB , typename = void ,
+                   typename = typename std::enable_if< is_expression< TA >::value && is_expression< TB >::value &&
+                                                       is_square< TA >::value && is_vector< TB >::value &&
+                                                       expression_traits< TA >::rows == vector_size< TB >::value
+                                                     >::type
+                 >
+        _ehm_inline
+        auto operator + ( TA&& e1 , TB&& e2 )
+        {
+            return Expressions::make_binary( std::forward< TA >( e1 ) , Expressions::Vector2Square< TB >( e2 ) ,
+                    []( auto a , auto b )
+                    {
+                        return a + b;
+                    }
+                );
+        }
+        template < typename TA , typename TB , typename = void , typename = void ,
+                   typename = typename std::enable_if< is_expression< TA >::value && is_expression< TB >::value &&
+                                                       is_square< TB >::value && is_vector< TA >::value &&
+                                                       expression_traits< TB >::rows == vector_size< TA >::value
+                                                     >::type
+                 >
+        _ehm_inline
+        auto operator + ( TA&& e1 , TB&& e2 )
+        {
+            return Expressions::make_binary( std::forward< TB >( e2 ) ,
+                                             Expressions::Vector2Square< TA >( std::forward< TA >( e1 ) ) ,
+                    []( auto a , auto b )
+                    {
+                        return a + b;
+                    }
+                );
+        }
+        template < typename TA , typename TB , typename = void ,
+                   typename = typename std::enable_if< is_expression< TA >::value && is_expression< TB >::value &&
+                                                       is_square< TA >::value && is_vector< TB >::value &&
+                                                       expression_traits< TA >::rows == vector_size< TB >::value
+                                                     >::type
+                 >
+        _ehm_inline
+        auto operator - ( TA&& e1 , TB&& e2 )
+        {
+            return Expressions::make_binary( std::forward< TA >( e1 ) ,
+                                             Expressions::Vector2Square< TB >( std::forward< TB >( e2 ) ) ,
+                    []( auto a , auto b )
+                    {
+                        return a - b;
+                    }
+                );
+        }
+        template < typename TA , typename TB , typename = void , typename = void ,
+                   typename = typename std::enable_if< is_expression< TA >::value && is_expression< TB >::value &&
+                                                       is_square< TB >::value && is_vector< TA >::value &&
+                                                       expression_traits< TB >::rows == vector_size< TA >::value
+                                                     >::type
+                 >
+        _ehm_inline
+        auto operator - ( TA&& e1 , TB&& e2 )
+        {
+            return Expressions::make_binary( std::forward< TB >( e2 ) ,
+                                             Expressions::Vector2Square< TA >( std::forward< TA >( e1 ) ) ,
+                    []( auto a , auto b )
+                    {
+                        return a - b;
                     }
                 );
         }

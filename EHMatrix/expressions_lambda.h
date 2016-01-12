@@ -18,8 +18,8 @@ namespace EH
                 auto_reference< TA > a;
                 FUNC func;
 
-                template < typename TT , typename FFUNC >
-                Unary( TT&& _a , FFUNC&& _func ) :
+                template < typename FFUNC >
+                Unary( auto_reference< TA > _a , FFUNC&& _func ) :
                     a( _a ) ,
                     func( _func )
                 {
@@ -42,6 +42,7 @@ namespace EH
             Unary< TA ,
                    FUNC ,
                    OPADD >
+            _ehm_inline
             make_unary( TA&& exp , FUNC&& func )
             {
                 return Unary< TA ,
@@ -59,8 +60,8 @@ namespace EH
                 auto_reference< TB > b;
                 FUNC func;
 
-                template < typename TTA , typename TTB , typename FFUNC >
-                Binary( TTA&& _a , TTB&& _b , FFUNC&& _func ) :
+                template < typename FFUNC >
+                Binary( auto_reference< TA > _a , auto_reference< TB > _b , FFUNC&& _func ) :
                     a( _a ) , b( _b ) , func( _func )
                 {
                 }
@@ -83,6 +84,7 @@ namespace EH
                     TB ,
                     FUNC ,
                     OPADD >
+            _ehm_inline
             make_binary( TA&& exp1 , TB&& exp2 , FUNC&& func )
             {
                 return Binary< TA ,

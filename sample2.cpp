@@ -11,6 +11,7 @@ int main()
     using mat2 = mat< float , 2 , 2 >;
 
     mat2 m1( 0 , 1 , 2 , 3 );
+
     m1.Log();
 
     m1.Column( 1 ) = 0;
@@ -29,13 +30,11 @@ int main()
 
     m1.Log();
 
-
     using vec2 = vec< float , 2 >;
     vec2 v1 = { 0 , 1 };
     vec2 v2 = { 1 , 2 };
 
-    vec2  v3 = v1*v2*v1;
+    m1 = m1 + v1;
 
-    v3.Log();
-
+    m1.Log();
 }

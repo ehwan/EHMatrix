@@ -56,7 +56,7 @@ namespace EH
             constexpr _ehm_inline
             result_type operator [] ( IndexType i ) const
             {
-                return GetBy( static_cast< const CRTP& >( *this ) , i );
+                return Get( i );
             }
 
 
@@ -123,7 +123,7 @@ namespace EH
             {
                 for( IndexType i=0; i<cols*rows; ++i )
                 {
-                    func( Get( i ) );
+                    func( GetBy( *this , i ) );
                 }
             }
             template < typename FUNC , bool SFINE = is_single_index >
@@ -135,7 +135,7 @@ namespace EH
                 {
                     for( IndexType y=0; y<rows; ++y )
                     {
-                        func( Get( x , y ) );
+                        func( GetBy( *this , x , y ) );
                     }
                 }
             }
@@ -215,7 +215,7 @@ namespace EH
                 std::bitset< rows*cols > ret;
                 for( IndexType i=0; i<rows*cols; ++i )
                 {
-                    ret.set( i , Get( i ) );
+                    ret.set( i , GetBy( *this , i ) );
                 }
                 return ret;
             }
@@ -230,7 +230,7 @@ namespace EH
                 {
                     for( IndexType y=0; y<rows; ++y )
                     {
-                        ret.set( y + x*rows , Get( x , y ) );
+                        ret.set( y + x*rows , GetBy( *this , x , y ) );
                     }
                 }
                 return ret;
@@ -245,9 +245,9 @@ namespace EH
                     LOGR( "(\t" );
                     for( IndexType x=0; x<cols-1; ++x )
                     {
-                        LOGR( Get( x , y ) , " , " );
+                        LOGR( GetBy( *this , x , y ) , " , " );
                     }
-                    LOG( Get( cols-1 , y ) , "\t)" );
+                    LOG( GetBy( *this , cols-1 , y ) , "\t)" );
                 }
                 return *this;
             }
@@ -265,18 +265,6 @@ namespace EH
             using parent::is_single_index;
             using parent::is_restrict;
 
-            template < typename T >
-            struct is_assign_restrict
-            {
-                _ehm_const bool value = is_restrict && expression_traits< T >::is_restrict;
-
-                using type = typename std::conditional<
-                                            value ,
-                                            const T& ,
-                                            const Matrix< result_type , rows , cols >
-                                        >::type;
-            };
-
 
             constexpr _ehm_inline operator       CRTP& ()       { return static_cast<       CRTP& >( *this ); }
             constexpr _ehm_inline operator const CRTP& () const { return static_cast< const CRTP& >( *this ); }
@@ -291,35 +279,18 @@ namespace EH
 
 
             // get reference
-            template < bool SFINE = is_single_index >
-            typename std::enable_if< SFINE , typename std::add_lvalue_reference< result_type >::type >::type
             constexpr _ehm_inline
+            result_type&
             Ref( IndexType i )
             {
-                return static_cast< CRTP& >( *this ).Ref( i );
-            }
-            template < bool SFINE = is_single_index >
-            typename std::enable_if< SFINE == false , typename std::add_lvalue_reference< result_type >::type >::type
-            constexpr _ehm_inline
-            Ref( IndexType i )
-            {
-                ERROR( "single-index access write not safe!" );
-                return static_cast< CRTP& >( *this ).Ref( i/rows , i%rows );
+                return RefBy( static_cast< CRTP& >( *this ) , i );
             }
 
-            template < bool SFINE = is_single_index >
-            typename std::enable_if< SFINE , typename std::add_lvalue_reference< result_type >::type >::type
             constexpr _ehm_inline
+            result_type&
             Ref( IndexType x , IndexType y )
             {
-                return static_cast< CRTP& >( *this ).Ref( y + x*rows );
-            }
-            template < bool SFINE = is_single_index >
-            typename std::enable_if< SFINE == false , typename std::add_lvalue_reference< result_type >::type >::type
-            constexpr _ehm_inline
-            Ref( IndexType x , IndexType y )
-            {
-                return static_cast< CRTP& >( *this ).Ref( x , y );
+                return RefBy( static_cast< CRTP& >( *this ) , x , y );
             }
 
 
@@ -367,7 +338,7 @@ namespace EH
             {
                 for( IndexType i=0; i<cols*rows; ++i )
                 {
-                    func( Ref( i ) );
+                    func( RefBy( *this , i ) );
                 }
             }
             template < typename FUNC , bool SFINE = is_single_index >
@@ -379,7 +350,7 @@ namespace EH
                 {
                     for( IndexType y=0; y<rows; ++y )
                     {
-                        func( Ref( x , y ) );
+                        func( RefBy( *this , x , y ) );
                     }
                 }
             }
@@ -391,7 +362,7 @@ namespace EH
                 assert( std::distance( begin , end ) == rows * cols );
                 for( IndexType i=0; i<cols*rows; ++i )
                 {
-                    func( Ref( i ) , *(begin++) );
+                    func( RefBy( *this , i ) , *(begin++) );
                 }
             }
             template < typename FUNC , bool SFINE = is_single_index , typename IterType >
@@ -404,7 +375,7 @@ namespace EH
                 {
                     for( IndexType y=0; y<rows; ++y )
                     {
-                        func( Ref( x , y ) , *(begin++) );
+                        func( RefBy( *this , x , y ) , *(begin++) );
                     }
                 }
             }
@@ -543,7 +514,7 @@ namespace EH
             typename std::enable_if<
                 EH::static_sequence< std::size_t , expression_traits< Ts >::rows*expression_traits< Ts >::cols ... >::sum::value == rows*cols
             >::type
-            constexpr _ehm_inline
+            _ehm_inline
             FillAggressive( Ts&& ... args )
             {
                 AggressiveForeach(
@@ -577,19 +548,37 @@ namespace EH
             typename std::enable_if<
                 is_expression< TA >::value &&
 
-                expression_traits< TA >::cols == cols &&
-                expression_traits< TA >::rows == rows ,
+                is_assign_restrict< CRTP , TA >::value &&
+
+                is_same_size< TA , CRTP >::value ,
                 CRTP&
             >::type
             _ehm_inline
             operator = ( TA&& exp )
             {
-                FillAggressive( typename is_assign_restrict< TA >::type( std::forward< TA >( exp ) ) );
+                FillAggressive( std::forward< TA >( exp ) );
                 return *this;
             }
             template < typename TA >
             typename std::enable_if<
                 is_expression< TA >::value &&
+
+                is_assign_restrict< CRTP , TA >::value == false &&
+
+                is_same_size< TA , CRTP >::value ,
+                CRTP&
+            >::type
+            _ehm_inline
+            operator = ( TA&& exp )
+            {
+                FillAggressive( matrix_type< TA >( std::forward< TA >( exp ) ) );
+                return *this;
+            }
+
+            template < typename TA >
+            typename std::enable_if<
+                is_expression< TA >::value &&
+
 
                 is_square< CRTP >::value &&
                 is_vector< TA >::value &&
@@ -600,7 +589,7 @@ namespace EH
             operator = ( TA&& exp )
             {
                 Fill( 0 );
-                Diagonal().FillAggressive( typename is_assign_restrict< TA >::type( std::forward< TA >( exp ) ) );
+                Diagonal() = exp;
                 return *this;
             }
             template < typename TA >
@@ -634,6 +623,8 @@ namespace EH
             typename std::enable_if<
                 is_expression< TA >::value &&
 
+                is_assign_restrict< CRTP , TA >::value &&
+
                 expression_traits< TA >::rows == rows &&
                 expression_traits< TA >::cols == cols ,
                 CRTP&
@@ -646,7 +637,29 @@ namespace EH
                         {
                             a += b;
                         } ,
-                        typename is_assign_restrict< TA >::type( std::forward< TA >( exp ) )
+                        std::forward< TA >( exp )
+                    );
+                return *this;
+            }
+            template < typename TA >
+            typename std::enable_if<
+                is_expression< TA >::value &&
+
+                is_assign_restrict< CRTP , TA >::value == false &&
+
+                expression_traits< TA >::rows == rows &&
+                expression_traits< TA >::cols == cols ,
+                CRTP&
+            >::type
+            _ehm_inline
+            operator += ( TA&& exp )
+            {
+                AggressiveForeach(
+                        []( auto& a , auto b )
+                        {
+                            a += b;
+                        } ,
+                        matrix_type< TA >( std::forward< TA >( exp ) )
                     );
                 return *this;
             }
@@ -703,8 +716,9 @@ namespace EH
             typename std::enable_if<
                 is_expression< TA >::value &&
 
-                expression_traits< TA >::rows == rows &&
-                expression_traits< TA >::cols == cols ,
+                is_assign_restrict< CRTP , TA >::value &&
+
+                is_same_size< CRTP , TA >::value ,
                 CRTP&
             >::type
             _ehm_inline
@@ -715,7 +729,28 @@ namespace EH
                         {
                             a -= b;
                         } ,
-                        typename is_assign_restrict< TA >::type( std::forward< TA >( exp ) )
+                        std::forward< TA >( exp )
+                    );
+                return *this;
+            }
+            template < typename TA >
+            typename std::enable_if<
+                is_expression< TA >::value &&
+
+                is_assign_restrict< CRTP , TA >::value == false &&
+
+                is_same_size< CRTP , TA >::value ,
+                CRTP&
+            >::type
+            _ehm_inline
+            operator -= ( TA&& exp )
+            {
+                AggressiveForeach(
+                        []( auto& a , auto b )
+                        {
+                            a -= b;
+                        } ,
+                        matrix_type< TA >( std::forward< TA >( exp ) )
                     );
                 return *this;
             }
