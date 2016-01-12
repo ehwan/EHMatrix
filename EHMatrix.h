@@ -5,6 +5,7 @@
 #include "EHMatrix/expression_interface.h"
 #include "EHMatrix/operators.h"
 #include "EHMatrix/bitset.h"
+#include "EHMatrix/complex.h"
 
 #undef _ehm_inline
 #undef _ehm_const
