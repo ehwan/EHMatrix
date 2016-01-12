@@ -75,6 +75,23 @@ namespace EH
             {
                 parent::Fill( a );
             }
+
+            constexpr _ehm_inline
+            T* begin()
+            {
+                return aliased_container< T , M , N >::s;
+            }
+            constexpr _ehm_inline
+            T* end()
+            {
+                return aliased_container< T , M , N >::s + M*N;
+            }
+
+            constexpr _ehm_inline
+            T* data()
+            {
+                return aliased_container< T , M , N >::s;
+            }
         };
 
         template < typename T , IndexType M , IndexType N >
@@ -94,5 +111,51 @@ namespace EH
 
             _ehm_const int       operations      = 0;
         };
+
+        template < typename TA ,
+                   typename = typename std::enable_if<
+                       is_expression< TA >::value
+                   >::type
+                 >
+        _ehm_inline auto
+        floor( TA&& exp )
+        {
+            return Expressions::make_unary( std::forward< TA >( exp ) ,
+                    []( auto x )
+                    {
+                        return std::floor( x );
+                    }
+                );
+        }
+        template < typename TA ,
+                   typename = typename std::enable_if<
+                       is_expression< TA >::value
+                   >::type
+                 >
+        _ehm_inline auto
+        ceil( TA&& exp )
+        {
+            return Expressions::make_unary( std::forward< TA >( exp ) ,
+                    []( auto x )
+                    {
+                        return std::ceil( x );
+                    }
+                );
+        }
+        template < typename TA ,
+                   typename = typename std::enable_if<
+                       is_expression< TA >::value
+                   >::type
+                 >
+        _ehm_inline auto
+        round( TA&& exp )
+        {
+            return Expressions::make_unary( std::forward< TA >( exp ) ,
+                    []( auto x )
+                    {
+                        return std::round( x );
+                    }
+                );
+        }
     };  // namespace Matrix
 };  //namespace EH

@@ -109,7 +109,7 @@ namespace EH
 
 
 
-        template < typename TA , typename TB ,
+        template < typename TA ,
                    typename = typename std::enable_if< is_expression< TA >::value >::type
                  >
         _ehm_inline
@@ -122,7 +122,7 @@ namespace EH
                     }
                 );
         }
-        template < typename TA , typename TB ,
+        template < typename TA ,
                    typename = typename std::enable_if< is_expression< TA >::value >::type
                  >
         _ehm_inline
@@ -135,7 +135,7 @@ namespace EH
                     }
                 );
         }
-        template < typename TA , typename TB ,
+        template < typename TA ,
                    typename = typename std::enable_if< is_expression< TA >::value >::type
                  >
         _ehm_inline
@@ -148,7 +148,7 @@ namespace EH
                     }
                 );
         }
-        template < typename TA , typename TB ,
+        template < typename TA ,
                    typename = typename std::enable_if< is_expression< TA >::value >::type
                  >
         _ehm_inline
@@ -161,7 +161,7 @@ namespace EH
                     }
                 );
         }
-        template < typename TA , typename TB ,
+        template < typename TA ,
                    typename = typename std::enable_if< is_expression< TA >::value >::type
                  >
         _ehm_inline
@@ -174,7 +174,7 @@ namespace EH
                     }
                 );
         }
-        template < typename TA , typename TB ,
+        template < typename TA ,
                    typename = typename std::enable_if< is_expression< TA >::value >::type
                  >
         _ehm_inline
@@ -192,7 +192,7 @@ namespace EH
 
 
 
-        template < typename TA , typename TB ,
+        template < typename TA ,
                    typename = typename std::enable_if< is_expression< TA >::value >::type
                  >
         _ehm_inline
@@ -205,7 +205,7 @@ namespace EH
                     }
                 );
         }
-        template < typename TA , typename TB ,
+        template < typename TA ,
                    typename = typename std::enable_if< is_expression< TA >::value >::type
                  >
         _ehm_inline
@@ -218,7 +218,7 @@ namespace EH
                     }
                 );
         }
-        template < typename TA , typename TB ,
+        template < typename TA ,
                    typename = typename std::enable_if< is_expression< TA >::value >::type
                  >
         _ehm_inline
@@ -231,7 +231,7 @@ namespace EH
                     }
                 );
         }
-        template < typename TA , typename TB ,
+        template < typename TA ,
                    typename = typename std::enable_if< is_expression< TA >::value >::type
                  >
         _ehm_inline
@@ -244,7 +244,7 @@ namespace EH
                     }
                 );
         }
-        template < typename TA , typename TB ,
+        template < typename TA ,
                    typename = typename std::enable_if< is_expression< TA >::value >::type
                  >
         _ehm_inline
@@ -257,7 +257,7 @@ namespace EH
                     }
                 );
         }
-        template < typename TA , typename TB ,
+        template < typename TA ,
                    typename = typename std::enable_if< is_expression< TA >::value >::type
                  >
         _ehm_inline

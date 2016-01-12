@@ -87,38 +87,38 @@ namespace EH
                 }
 
                 template < typename SFINE = TA >
-                typename std::enable_if< is_row_vector< TA >::value , result_type >::type
+                typename std::enable_if< is_row_vector< SFINE >::value , result_type >::type
                 _ehm_inline
                 Get( IndexType i ) const
                 {
                     return GetBy( a , i , 0 );
                 }
                 template < typename SFINE = TA >
-                typename std::enable_if< is_column_vector< TA >::value , result_type >::type
+                typename std::enable_if< is_column_vector< SFINE >::value , result_type >::type
                 _ehm_inline
                 Get( IndexType i ) const
                 {
                     return GetBy( a , 0 , i );
                 }
-                _ehm_inline auto Get( IndexType x , IndexType y ) const
+                _ehm_inline result_type Get( IndexType x , IndexType y ) const
                 {
                     return GetBy( a , y , x );
                 }
                 template < typename SFINE = TA >
-                typename std::enable_if< is_row_vector< TA >::value , result_type& >::type
+                typename std::enable_if< is_row_vector< SFINE >::value , result_type& >::type
                 _ehm_inline
                 Ref( IndexType i )
                 {
                     return RefBy( a , i , 0 );
                 }
                 template < typename SFINE = TA >
-                typename std::enable_if< is_column_vector< TA >::value , result_type& >::type
+                typename std::enable_if< is_column_vector< SFINE >::value , result_type& >::type
                 _ehm_inline
                 Ref( IndexType i )
                 {
                     return RefBy( a , 0 , i );
                 }
-                _ehm_inline auto& Ref( IndexType x , IndexType y )
+                _ehm_inline result_type& Ref( IndexType x , IndexType y )
                 {
                     return RefBy( a , y , x );
                 }
@@ -199,10 +199,10 @@ namespace EH
             struct MatMatMult :
                 Expression< MatMatMult< TA , TB > >
             {
-                using result_type = typename expression_traits< MatMatMult< TA , TB > >::result_type;
+                using typename Expression< MatMatMult< TA , TB > >::result_type;
 
-                typename ShouldMakeTemp< const TA , expression_traits< TB >::cols >::type a;
-                typename ShouldMakeTemp< const TB , expression_traits< TA >::rows >::type b;
+                const typename ShouldMakeTemp< TA , expression_traits< TB >::cols >::type a;
+                const typename ShouldMakeTemp< TB , expression_traits< TA >::rows >::type b;
 
                 MatMatMult( auto_reference< TA > _a , auto_reference< TB > _b ) :
                     a( _a ) , b( _b )
@@ -210,9 +210,8 @@ namespace EH
                 }
 
                 // vec-mat mult
-                template < typename _TA = TA , typename _TB = TB ,
-                           typename = typename std::enable_if< is_row_vector< _TA >::value >::type >
-                auto
+                template < typename _TA = TA , typename _TB = TB >
+                typename std::enable_if< is_row_vector< _TA >::value , result_type >::type
                 Get( IndexType i ) const
                 {
                     result_type sum = result_type( 0 );
@@ -225,9 +224,8 @@ namespace EH
                     return sum;
                 }
                 // mat-vec mult
-                template < typename _TA = TA , typename _TB = TB , typename = void ,
-                           typename = typename std::enable_if< is_column_vector< _TB >::value >::type >
-                auto
+                template < typename _TA = TA , typename _TB = TB >
+                typename std::enable_if< is_column_vector< _TB >::value , result_type >::type
                 Get( IndexType i ) const
                 {
                     result_type sum = result_type( 0 );
@@ -273,7 +271,7 @@ namespace EH
             _ehm_const IndexType rows            = expression_traits< TA >::cols;
             _ehm_const IndexType cols            = expression_traits< TA >::rows;
             _ehm_const bool      catch_reference = false;
-            _ehm_const bool      is_single_index = expression_traits< TA >::is_single_index || is_vector< TA >::value;
+            _ehm_const bool      is_single_index = is_vector< TA >::value;
             _ehm_const bool      is_restrict     = false;
         };
 
@@ -312,15 +310,10 @@ namespace EH
 
 
         template < typename TA , typename TB >
-        struct expression_traits< Expressions::MatMatMult< TA , TB > >
+        struct expression_traits< Expressions::MatMatMult< TA , TB > > : expression_traits< TA , TB >
         {
             using tempA = Expressions::ShouldMakeTemp< TA , expression_traits< TB >::cols >;
             using tempB = Expressions::ShouldMakeTemp< TB , expression_traits< TA >::rows >;
-
-            using result_type = typename std::common_type<
-                                            typename expression_traits< TA >::result_type ,
-                                            typename expression_traits< TB >::result_type
-                                        >::type;
 
             _ehm_const IndexType cols = expression_traits< TB >::cols;
             _ehm_const IndexType rows = expression_traits< TA >::rows;

@@ -89,6 +89,7 @@ int main()
      *
      *
      */
+
     {
         mats< float , 3 > m1 = 3;
         vec< float , 3 > v1 = 4;
@@ -96,6 +97,8 @@ int main()
         mats< float , 4 > m4( m1 , v2 , v1 , 3 );
         m4.Log();
     }
+
+
 
     // EXP::has_same_root( matrix_type )
     // returns true if Expression
@@ -112,8 +115,10 @@ int main()
     // dot product; same as LengthSquared()
     float sq = v1.Transpose() * v1;
 
+
     // general matrix-vector multiply
     vec< float , 2 > v2 = m1 * v1;
+
 
     v1.x; v1.r;   // aliased-accessing , only for vector
     v1.y; v1.g;   // aliased-accessing , only for vector
@@ -123,6 +128,7 @@ int main()
     v2.LengthSquared();
     // return the original length;
     float length = v2.Normalize();
+
 
     // for vector type;
     // several special operations
@@ -144,13 +150,13 @@ int main()
     v1 = v1 / v3;
 
     // proxy expression Diagonal();
-    m2.Diagonal() += { 0 , 1 };
+    m2.Diagonal() += vec< float , 2 >{ 0 , 1 };
     //( x += 0 ,  y       )
     //( z      ,  z += 1  )
 
     // proxy
     // Row & Column
-    m2.Column( 1 )  *= { 2 , 2 };
+    m2.Column( 1 )  *= vec< float , 2 >{ 2 , 2 };
     m2.Row( 0 )     *= 2;
 
     // proxy
@@ -172,7 +178,7 @@ int main()
     // can be converted into std::bitset , bool
     // operator bool() will call all() function
 
-    auto bits1 = m1 == 2;                   // bits1 is expression type
+    auto bits1 = m1 == 2.0f;                   // bits1 is expression type
     auto bits2 = 5 >= m2;                   // bits2 is expression type
     auto bits3 = m2 == m2.Transpose();      // bits3 is expression type
     // implict-conversion

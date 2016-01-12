@@ -119,7 +119,7 @@ namespace EH
             template < typename FUNC , bool SFINE = is_single_index >
             typename std::enable_if< SFINE >::type
             constexpr _ehm_inline
-            ForeachConst( FUNC&& func )
+            ForeachConst( FUNC&& func ) const
             {
                 for( IndexType i=0; i<cols*rows; ++i )
                 {
@@ -129,7 +129,7 @@ namespace EH
             template < typename FUNC , bool SFINE = is_single_index >
             typename std::enable_if< SFINE == false >::type
             constexpr _ehm_inline
-            ForeachConst( FUNC&& func )
+            ForeachConst( FUNC&& func ) const
             {
                 for( IndexType x=0; x<cols; ++x )
                 {
@@ -152,7 +152,6 @@ namespace EH
                             sum += x*x;
                         }
                     );
-
                 return sum;
             }
             template < typename SFINE = CRTP >
@@ -235,6 +234,9 @@ namespace EH
                 }
                 return ret;
             }
+
+            template < typename SFINE = result_type , typename = typename std::enable_if< std::is_same< bool , SFINE >::value >::type >
+            _ehm_inline operator std::bitset< rows*cols >() const { return bitset(); }
 
 
             const CRTP& Log() const
