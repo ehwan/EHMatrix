@@ -8,7 +8,6 @@
 // the exxternal libraries
 
 #include "../../EHLog.h"
-#include "../../static_sequence/static_sequence.h"
 
 #define MAKE_SIGNED(x) (int)( 1 | ( (x)-1 ) )
 
@@ -22,6 +21,22 @@
 
 namespace EH
 {
+    template < typename T , std::size_t ... Is >
+    struct static_sequence
+    {
+        _ehm_const std::size_t count = sizeof...( Is );
+        constexpr static std::size_t _sum_()
+        {
+            std::size_t s = 0;
+            std::size_t arrs[] = { Is... };
+            for( std::size_t i=0; i<count; ++i )
+            {
+                s += arrs[i];
+            }
+            return s;
+        }
+        using sum = std::integral_constant< std::size_t , _sum_() >;
+    };
     namespace Matrix
     {
         using EH::LOG::LOG;

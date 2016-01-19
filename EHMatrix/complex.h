@@ -51,9 +51,10 @@ namespace EH
             {
                 using typename Expression< ComplexConjugate< TA > >::result_type;
 
-                auto_reference< TA > a;
+                auto_reference< const TA > a;
+                
 
-                ComplexConjugate( auto_reference< TA > _a ) :
+                ComplexConjugate( const auto_reference< TA > _a ) :
                     a( _a )
                 {
                 }
@@ -77,10 +78,10 @@ namespace EH
                 Expression< ComplexMultiply< TA , TB > >
             {
                 using typename Expression< ComplexMultiply< TA , TB > >::result_type;
-                typename Expressions::ShouldMakeTemp< TA , 2 >::type a;
-                typename Expressions::ShouldMakeTemp< TB , 2 >::type b;
+                typename Expressions::ShouldMakeTemp< const TA , 2 >::type a;
+                typename Expressions::ShouldMakeTemp< const TB , 2 >::type b;
 
-                ComplexMultiply( auto_reference< TA > _a , auto_reference< TB > _b ) :
+                ComplexMultiply( auto_reference< const TA > _a , auto_reference< const TB > _b ) :
                     a( _a ) , b( _b )
                 {
                 }
@@ -259,7 +260,7 @@ namespace EH
                 Expression< QuatConjugate< TA > >
             {
                 using typename Expression< QuatConjugate< TA > >::result_type;
-                auto_reference< TA > a;
+                const auto_reference< TA > a;
 
                 QuatConjugate( auto_reference< TA > _a ) :
                     a( _a )

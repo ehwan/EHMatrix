@@ -37,4 +37,14 @@ int main()
     m1 = m1 + v1;
 
     m1.Log();
+
+    m1 = EH::Matrix::Expressions::make_index_filter< false , false , 2 , 2 >( m1 ,
+            []( auto& x , auto& y )
+            {
+                x = 1;
+                y = 0;
+            }
+        );
+
+    m1.Log();
 }

@@ -86,9 +86,24 @@ namespace EH
             {
                 return aliased_container< T , M , N >::s + M*N;
             }
+            constexpr _ehm_inline
+            const T* begin() const
+            {
+                return aliased_container< T , M , N >::s;
+            }
+            constexpr _ehm_inline
+            const T* end() const
+            {
+                return aliased_container< T , M , N >::s + M*N;
+            }
 
             constexpr _ehm_inline
             T* data()
+            {
+                return aliased_container< T , M , N >::s;
+            }
+            constexpr _ehm_inline
+            const T* data() const
             {
                 return aliased_container< T , M , N >::s;
             }
@@ -119,7 +134,7 @@ namespace EH
             is_column_vector< TA >::value && is_column_vector< TB >::value &&
             vector_size< TA >::value == 2 && vector_size< TB >::value == 2 ,
             typename expression_traits< TA , TB >::result_type
-        >
+        >::type
         Cross( TA&& v1 ,
                TB&& v2 )
         {
@@ -186,6 +201,30 @@ namespace EH
                 GetBy( a , 0 , 1 )*GetBy( b , 0 , 2 ) - GetBy( a , 0 , 2 )*GetBy( b , 0 , 1 ) ,
                 GetBy( a , 0 , 2 )*GetBy( b , 0 , 0 ) - GetBy( a , 0 , 0 )*GetBy( b , 0 , 2 ) ,
                 GetBy( a , 0 , 0 )*GetBy( b , 0 , 1 ) - GetBy( a , 0 , 1 )*GetBy( b , 0 , 0 )
+            };
+        }
+
+        template < typename TA >
+        typename std::enable_if<
+            is_square< TA >::value ,
+            typename expression_traits< TA >::value
+        >::type
+        _ehm_inline
+        Det( const Expression< TA >& exp )
+        {
+        }
+
+        template < typename TA >
+        auto Inverse( const expression_size_type< TA , 2 , 2 >& e1 )
+        {
+            typename Expressions::ShouldMakeTemp< const TA , 2 >::type temp( e1 );
+            using result_type = typename expression_traits< TA >::result_type;
+            const result_type d = result_type( 1 ) /
+                ( GetBy( temp , 0 , 0 )*GetBy( temp , 1 , 1 ) - GetBy( temp , 1 , 0 )*GetBy( temp , 0 , 1 ) );
+
+            return Matrix< result_type , 2 , 2 >
+            {
+                d*GetBy( temp , 1 , 1 ) , -d*GetBy( temp , 0 , 1 ) , -d*GetBy( temp , 1 , 0 ) , d*GetBy( temp , 0 , 0 )
             };
         }
 

@@ -166,9 +166,9 @@ namespace EH
                 using Expression< Vector2Square< TA > >::cols;
                 using typename Expression< Vector2Square< TA > >::result_type;
 
-                auto_reference< TA > a;
+                auto_reference< const TA > a;
 
-                Vector2Square( auto_reference< TA > _a ) :
+                Vector2Square( auto_reference< const TA > _a ) :
                     a( _a )
                 {
                 }
@@ -201,10 +201,10 @@ namespace EH
             {
                 using typename Expression< MatMatMult< TA , TB > >::result_type;
 
-                const typename ShouldMakeTemp< TA , expression_traits< TB >::cols >::type a;
-                const typename ShouldMakeTemp< TB , expression_traits< TA >::rows >::type b;
+                typename ShouldMakeTemp< const TA , expression_traits< TB >::cols >::type a;
+                typename ShouldMakeTemp< const TB , expression_traits< TA >::rows >::type b;
 
-                MatMatMult( auto_reference< TA > _a , auto_reference< TB > _b ) :
+                MatMatMult( auto_reference< const TA > _a , auto_reference< const TB > _b ) :
                     a( _a ) , b( _b )
                 {
                 }
@@ -258,9 +258,9 @@ namespace EH
                 Expression< Vector2Skew< T > >
             {
                 using typename Expression< Vector2Skew< T > >::result_type;
-                auto_reference< T > a;
+                auto_reference< const T > a;
 
-                Vector2Skew( auto_reference< T > _a ) :
+                Vector2Skew( auto_reference< const T > _a ) :
                     a( _a )
                 {
                 }

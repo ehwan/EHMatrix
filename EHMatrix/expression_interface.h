@@ -22,6 +22,12 @@ namespace EH
                    >::type
                  >
         using expression_size_type = Expression< CLS >;
+        template < typename CLS , IndexType N ,
+                   typename Enabled = typename std::enable_if<
+                       is_vector< CLS >::value && ( N == 0 || vector_size< CLS >::value == N )
+                   >::type
+                 >
+        using expression_vector_size_type = Expression< CLS >;
 
         template < typename CRTP >
         struct Expression
@@ -138,6 +144,22 @@ namespace EH
                         func( GetBy( *this , x , y ) );
                     }
                 }
+            }
+
+            constexpr _ehm_inline
+            Matrix< result_type , rows , cols > matrix() const
+            {
+                return Matrix< result_type , rows , cols >( *this );
+            }
+            template < typename TO >
+            _ehm_inline
+            typename std::conditional< is_assign_restrict< TO , CRTP >::value ,
+                                       const CRTP& ,
+                                       Matrix< result_type , rows , cols >
+                                     >::type
+            assign_temp() const
+            {
+                return *this;
             }
 
 
@@ -548,160 +570,103 @@ namespace EH
 
             template < typename TA >
             typename std::enable_if<
-                is_expression< TA >::value &&
-
-                is_assign_restrict< CRTP , TA >::value &&
-
                 is_same_size< TA , CRTP >::value ,
                 CRTP&
             >::type
             _ehm_inline
-            operator = ( TA&& exp )
+            operator = ( const Expression< TA >& exp )
             {
-                FillAggressive( std::forward< TA >( exp ) );
-                return *this;
-            }
-            template < typename TA >
-            typename std::enable_if<
-                is_expression< TA >::value &&
-
-                is_assign_restrict< CRTP , TA >::value == false &&
-
-                is_same_size< TA , CRTP >::value ,
-                CRTP&
-            >::type
-            _ehm_inline
-            operator = ( TA&& exp )
-            {
-                FillAggressive( matrix_type< TA >( std::forward< TA >( exp ) ) );
+                FillAggressive( exp.template assign_temp< CRTP >() );
                 return *this;
             }
 
             template < typename TA >
             typename std::enable_if<
-                is_expression< TA >::value &&
-
-
                 is_square< CRTP >::value &&
-                is_vector< TA >::value &&
-                expression_traits< TA >::rows == rows ,
+                is_column_vector< TA >::value &&
+                vector_size< TA >::value == rows ,
                 CRTP&
             >::type
             _ehm_inline
-            operator = ( TA&& exp )
+            operator = ( const Expression< TA >& exp )
             {
                 Fill( 0 );
                 Diagonal() = exp;
                 return *this;
             }
-            template < typename TA >
+            template < typename SFINE = CRTP >
             typename std::enable_if<
-                is_scalar< TA >::value &&
-                is_square< CRTP >::value ,
+                is_square< SFINE >::value ,
                 CRTP&
             >::type
             _ehm_inline
-            operator = ( TA&& scalar )
+            operator = ( result_type scalar )
             {
                 Fill( 0 );
-                Diagonal().Fill( std::forward< TA >( scalar ) );
+                Diagonal().Fill( scalar );
                 return *this;
             }
-            template < typename TA >
+            template < typename SFINE = CRTP >
             typename std::enable_if<
-                is_scalar< TA >::value &&
-                is_vector< CRTP >::value ,
+                is_vector< SFINE >::value ,
                 CRTP&
             >::type
             _ehm_inline
-            operator = ( TA&& scalar )
+            operator = ( result_type scalar )
             {
-                Fill( std::forward< TA >( scalar ) );
+                Fill( scalar );
                 return *this;
             }
 
 
             template < typename TA >
             typename std::enable_if<
-                is_expression< TA >::value &&
-
-                is_assign_restrict< CRTP , TA >::value &&
-
-                expression_traits< TA >::rows == rows &&
-                expression_traits< TA >::cols == cols ,
+                is_same_size< TA , CRTP >::value ,
                 CRTP&
             >::type
             _ehm_inline
-            operator += ( TA&& exp )
+            operator += ( const Expression< TA >& exp )
             {
                 AggressiveForeach(
                         []( auto& a , auto b )
                         {
                             a += b;
                         } ,
-                        std::forward< TA >( exp )
+                        exp.template assign_temp< CRTP >()
                     );
                 return *this;
             }
             template < typename TA >
             typename std::enable_if<
-                is_expression< TA >::value &&
-
-                is_assign_restrict< CRTP , TA >::value == false &&
-
-                expression_traits< TA >::rows == rows &&
-                expression_traits< TA >::cols == cols ,
-                CRTP&
-            >::type
-            _ehm_inline
-            operator += ( TA&& exp )
-            {
-                AggressiveForeach(
-                        []( auto& a , auto b )
-                        {
-                            a += b;
-                        } ,
-                        matrix_type< TA >( std::forward< TA >( exp ) )
-                    );
-                return *this;
-            }
-            template < typename TA >
-            typename std::enable_if<
-                is_expression< TA >::value &&
-
                 is_square< CRTP >::value &&
-                is_vector< TA >::value &&
-                expression_traits< TA >::rows == rows ,
+                is_column_vector< TA >::value &&
+                vector_size< TA >::value == rows ,
                 CRTP&
             >::type
             _ehm_inline
-            operator += ( TA&& exp )
+            operator += ( const Expression< TA >& exp )
             {
                 Diagonal() += exp;
                 return *this;
             }
-            template < typename TA >
+            template < typename SFINE = CRTP >
             typename std::enable_if<
-                is_scalar< TA >::value &&
-
-                is_square< CRTP >::value ,
+                is_square< SFINE >::value ,
                 CRTP&
             >::type
             _ehm_inline
-            operator += ( TA&& scalar )
+            operator += ( result_type scalar )
             {
                 Diagonal() += scalar;
                 return *this;
             }
-            template < typename TA >
+            template < typename SFINE = CRTP >
             typename std::enable_if<
-                is_scalar< TA >::value &&
-
-                is_vector< CRTP >::value ,
+                is_vector< SFINE >::value ,
                 CRTP&
             >::type
             _ehm_inline
-            operator += ( TA&& scalar )
+            operator += ( result_type scalar )
             {
                 Foreach(
                         [ scalar ]( auto& a )
@@ -716,83 +681,52 @@ namespace EH
 
             template < typename TA >
             typename std::enable_if<
-                is_expression< TA >::value &&
-
-                is_assign_restrict< CRTP , TA >::value &&
-
                 is_same_size< CRTP , TA >::value ,
                 CRTP&
             >::type
             _ehm_inline
-            operator -= ( TA&& exp )
+            operator -= ( const Expression< TA >& exp )
             {
                 AggressiveForeach(
                         []( auto& a , auto b )
                         {
                             a -= b;
                         } ,
-                        std::forward< TA >( exp )
+                        exp.template assign_temp< CRTP >()
                     );
                 return *this;
             }
             template < typename TA >
             typename std::enable_if<
-                is_expression< TA >::value &&
-
-                is_assign_restrict< CRTP , TA >::value == false &&
-
-                is_same_size< CRTP , TA >::value ,
-                CRTP&
-            >::type
-            _ehm_inline
-            operator -= ( TA&& exp )
-            {
-                AggressiveForeach(
-                        []( auto& a , auto b )
-                        {
-                            a -= b;
-                        } ,
-                        matrix_type< TA >( std::forward< TA >( exp ) )
-                    );
-                return *this;
-            }
-            template < typename TA >
-            typename std::enable_if<
-                is_expression< TA >::value &&
-
                 is_square< CRTP >::value &&
-                is_vector< TA >::value &&
-                expression_traits< TA >::rows == rows ,
+                is_column_vector< TA >::value &&
+                vector_size< TA >::value == rows ,
                 CRTP&
             >::type
             _ehm_inline
-            operator -= ( TA&& exp )
+            operator -= ( const Expression< TA >& exp )
             {
                 Diagonal() -= exp;
                 return *this;
             }
-            template < typename TA >
+            template < typename SFINE >
             typename std::enable_if<
-                is_scalar< TA >::value &&
-
-                is_square< CRTP >::value ,
+                is_square< SFINE >::value ,
                 CRTP&
             >::type
             _ehm_inline
-            operator -= ( TA&& scalar )
+            operator -= ( result_type scalar )
             {
                 Diagonal() -= scalar;
                 return *this;
             }
-            template < typename TA >
+            template < typename SFINE >
             typename std::enable_if<
-                is_scalar< TA >::value &&
-
-                is_vector< CRTP >::value ,
+                is_vector< SFINE >::value ,
                 CRTP&
             >::type
             _ehm_inline
-            operator -= ( TA&& scalar )
+            operator -= ( result_type scalar )
             {
                 Foreach(
                         [ scalar ]( auto& a )
@@ -803,13 +737,8 @@ namespace EH
                 return *this;
             }
 
-            template < typename TA >
-            typename std::enable_if<
-                is_scalar< TA >::value ,
-                CRTP&
-            >::type
-            _ehm_inline
-            operator *= ( TA&& scalar )
+            CRTP& _ehm_inline
+            operator *= ( result_type scalar )
             {
                 Foreach(
                         [ scalar ]( auto& a )
@@ -821,50 +750,39 @@ namespace EH
             }
             template < typename TA >
             typename std::enable_if<
-                is_expression< TA >::value &&
-
-                is_vector< CRTP >::value &&
-                is_vector< TA >::value &&
-                expression_traits< TA >::rows == rows ,
+                is_same_vector< TA , CRTP >::value &&
+                vector_size< TA >::value == vector_size< CRTP >::value ,
                 CRTP&
             >::type
             _ehm_inline
-            operator *= ( TA&& exp )
+            operator *= ( const Expression< TA >& exp )
             {
                 AggressiveForeach(
                         []( auto& a , auto b )
                         {
                             a *= b;
                         } ,
-                        std::forward< TA >( exp )
+                        exp.template assign_temp< CRTP >()
                     );
                 return *this;
             }
             template < typename TA >
             typename std::enable_if<
-                is_expression< TA >::value &&
-
                 is_square< TA >::value &&
                 expression_traits< TA >::cols == cols &&
                 is_column_vector< CRTP >::value == false ,
                 CRTP&
             >::type
             _ehm_inline
-            operator *= ( TA&& exp )
+            operator *= ( const Expression< TA >& exp )
             {
-                const Matrix< result_type , rows , cols > mat( *this * exp );
-                FillAggressive( mat );
+                FillAggressive( Matrix< result_type , rows , cols >( (*this) * exp ) );
                 return *this;
             }
 
 
-            template < typename TA >
-            typename std::enable_if<
-                is_scalar< TA >::value ,
-                CRTP&
-            >::type
-            _ehm_inline
-            operator /= ( TA&& scalar )
+            CRTP& _ehm_inline
+            operator /= ( result_type scalar )
             {
                 Foreach(
                         [ scalar ]( auto& a )
@@ -876,22 +794,19 @@ namespace EH
             }
             template < typename TA >
             typename std::enable_if<
-                is_expression< TA >::value &&
-
-                is_vector< CRTP >::value &&
-                is_vector< TA >::value &&
-                expression_traits< TA >::rows == rows ,
+                is_same_vector< TA , CRTP >::value &&
+                vector_size< TA >::value == vector_size< CRTP >::value ,
                 CRTP&
             >::type
             _ehm_inline
-            operator /= ( TA&& exp )
+            operator /= ( const Expression< TA >& exp )
             {
                 AggressiveForeach(
                         []( auto& a , auto b )
                         {
                             a /= b;
                         } ,
-                        std::forward< TA >( exp )
+                        exp.template assign_temp< CRTP >()
                     );
                 return *this;
             }

@@ -60,6 +60,16 @@ namespace EH
             >
         {
         };
+        template < typename TA , typename TB >
+        struct is_same_vector :
+            std::integral_constant<
+                bool ,
+                is_vector< TA >::value && is_vector< TB >::value &&
+                is_column_vector< TA >::value == is_column_vector< TB >::value &&
+                is_row_vector< TA >::value == is_row_vector< TB >::value
+            >
+        {
+        };
         template < typename TA >
         struct vector_size :
             std::integral_constant<
@@ -70,19 +80,13 @@ namespace EH
         };
 
         template < typename DST , typename SRC >
-        struct is_assign_restrict
+        struct is_assign_restrict :
+            std::integral_constant<
+                bool ,
+                ( expression_traits< DST >::is_restrict && expression_traits< SRC >::is_restrict )
+                //|| ( std::is_same< expression_traits< DST >::root_type , expression_traits< SRC >::root_type >::value == false )
+            >
         {
-            _ehm_const bool value = expression_traits< DST >::is_restrict && expression_traits< SRC >::is_restrict;
-
-            using type = typename std::conditional< value ,
-                                                      typename std::add_lvalue_reference< SRC >::type ,
-                                                      Matrix< typename expression_traits< SRC >::result_type ,
-                                                              expression_traits< SRC >::rows ,
-                                                              expression_traits< SRC >::cols
-                                                            >
-                                                    >::type;
-
-
         };
 
         template < typename T >
@@ -216,6 +220,29 @@ namespace EH
             return a.Get( y + x * expression_traits< TA >::rows );
         }
 
+        template < typename TA >
+        typename std::enable_if<
+            is_expression< TA >::value &&
+            is_column_vector< TA >::value ,
+            typename expression_traits< TA >::result_type
+        >::type
+        constexpr _ehm_inline
+        GetByVector( TA&& a , IndexType i )
+        {
+            return GetBy( a , 0 , i );
+        }
+        template < typename TA >
+        typename std::enable_if<
+            is_expression< TA >::value &&
+            is_row_vector< TA >::value ,
+            typename expression_traits< TA >::result_type
+        >::type
+        constexpr _ehm_inline
+        GetByVector( TA&& a , IndexType i )
+        {
+            return GetBy( a , i , 0 );
+        }
+
 
 
 
@@ -264,6 +291,28 @@ namespace EH
         RefBy( TA&& a , IndexType x , IndexType y )
         {
             return a.Ref( x , y );
+        }
+        template < typename TA >
+        typename std::enable_if<
+            is_expression< TA >::value &&
+            is_column_vector< TA >::value ,
+            typename expression_traits< TA >::result_type
+        >::type
+        constexpr _ehm_inline
+        RefByVector( TA&& a , IndexType i )
+        {
+            return RefBy( a , 0 , i );
+        }
+        template < typename TA >
+        typename std::enable_if<
+            is_expression< TA >::value &&
+            is_row_vector< TA >::value ,
+            typename expression_traits< TA >::result_type
+        >::type
+        constexpr _ehm_inline
+        RefByVector( TA&& a , IndexType i )
+        {
+            return RefBy( a , i , 0 );
         }
 
     };
