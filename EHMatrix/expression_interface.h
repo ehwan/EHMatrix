@@ -66,7 +66,6 @@ namespace EH
             }
 
 
-
             auto
             _ehm_inline
             Diagonal() const
@@ -147,7 +146,7 @@ namespace EH
             }
 
             constexpr _ehm_inline
-            Matrix< result_type , rows , cols > matrix() const
+            matrix_type< CRTP >  matrix() const
             {
                 return Matrix< result_type , rows , cols >( *this );
             }

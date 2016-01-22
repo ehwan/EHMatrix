@@ -78,6 +78,14 @@ namespace EH
             >
         {
         };
+        template < typename TA >
+        struct matrix_size :
+            std::integral_constant<
+                IndexType ,
+                expression_traits< TA >::rows * expression_traits< TA >::cols
+            >
+        {
+        };
 
         template < typename DST , typename SRC >
         struct is_assign_restrict :

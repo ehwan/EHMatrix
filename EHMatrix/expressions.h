@@ -26,11 +26,8 @@ namespace EH
                 // else returns expression-reference type
                 typedef typename std::conditional<
                             value ,
-                            const Matrix< typename expression_traits< T >::result_type ,
-                                          expression_traits< T >::rows ,
-                                          expression_traits< T >::cols
-                                        > ,
-                            auto_reference< T >
+                            const matrix_type< T > ,
+                            typename std::add_const< auto_reference< T > >::type
                         >::type type;
 
                 _ehm_const bool is_single_index = value ? true : expression_traits< T >::is_single_index;

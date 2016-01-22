@@ -44,7 +44,7 @@ namespace EH
 
             template < typename ... Ts ,
                        typename = typename std::enable_if<
-                           EH::static_sequence< std::size_t , expression_traits< Ts >::rows*expression_traits< Ts >::cols ... >::sum::value == M*N
+                           EH::static_sequence< IndexType , matrix_size< Ts >::value ... >::sum::value == M*N
                         >::type >
             constexpr Matrix( Ts&& ... args )
             {
@@ -54,7 +54,7 @@ namespace EH
             template < typename ... Ts , typename = void ,
                        typename = typename std::enable_if<
                            M == N &&
-                           EH::static_sequence< std::size_t , expression_traits< Ts >::rows*expression_traits< Ts >::cols ... >::sum::value == M
+                           EH::static_sequence< IndexType , matrix_size< Ts >::value ... >::sum::value == M
                         >::type >
             constexpr Matrix( Ts&& ... args )
             {
