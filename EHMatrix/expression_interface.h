@@ -145,6 +145,18 @@ namespace EH
                 }
             }
 
+            _ehm_inline 
+            result_type sum( result_type zero = result_type(0) ) const
+            {
+                ForeachConst( 
+                        [ &zero ]( auto x )
+                        {
+                            zero += x;
+                        }
+                    );
+                return zero;
+            }
+
             constexpr _ehm_inline
             matrix_type< CRTP >  matrix() const
             {
@@ -435,7 +447,7 @@ namespace EH
                 {
                     for( IndexType y=0; y<M0; ++y )
                     {
-                        func( Ref( x + OX , y + OY ) , GetBy( std::forward< T0 >( arg0 ) , x , y ) );
+                        func( RefBy( *this , x + OX , y + OY ) , GetBy( std::forward< T0 >( arg0 ) , x , y ) );
                     }
                 }
             }
@@ -454,7 +466,7 @@ namespace EH
             {
                 for( IndexType i=0; i<M0*N0; ++i )
                 {
-                    func( Ref( i + OX*rows ) , GetBy( std::forward< T0 >( arg0 ) , i ) );
+                    func( RefBy( *this , i + OX*rows ) , GetBy( std::forward< T0 >( arg0 ) , i ) );
                 }
             }
             template < IndexType OX = 0 , IndexType OY = 0 , IndexType M0 = rows , IndexType N0 = cols , IndexType _LEFT = 0 ,
