@@ -273,5 +273,38 @@ namespace EH
                     }
                 );
         }
+        template < typename TA >
+        _ehm_inline auto
+        abs( const Expression< TA >& exp )
+        {
+            return Expressions::make_unary( exp ,
+                    []( auto x )
+                    {
+                        return std::abs( x );
+                    }
+                );
+        }
+        template < typename TA , typename TB >
+        _ehm_inline auto
+        max( const Expression< TA >& e1 , const Expression< TB >& e2 )
+        {
+            return Expressions::make_binary( e1 , e2 ,
+                    []( auto a , auto b )
+                    {
+                        return std::max( a , b );
+                    }
+                );
+        }
+        template < typename TA , typename TB >
+        _ehm_inline auto
+        min( const Expression< TA >& e1 , const Expression< TB >& e2 )
+        {
+            return Expressions::make_binary( e1 , e2 ,
+                    []( auto a , auto b )
+                    {
+                        return std::min( a , b );
+                    }
+                );
+        }
     };  // namespace Matrix
 };  //namespace EH
