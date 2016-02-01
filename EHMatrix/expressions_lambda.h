@@ -21,7 +21,7 @@ namespace EH
                 template < typename FFUNC >
                 Unary( auto_reference< const TA > _a , FFUNC&& _func ) :
                     a( _a ) ,
-                    func( _func )
+                    func( std::move( _func ) )
                 {
                 }
 
@@ -99,7 +99,8 @@ namespace EH
 
                 template < typename FFUNC >
                 IndexFilter( auto_reference< TA > _a , FFUNC&& _func ) :
-                    a( _a ) , func( _func )
+                    a( _a ) ,
+                    func( std::move( _func ) )
                 {
                 }
 

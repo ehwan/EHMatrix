@@ -228,5 +228,38 @@ namespace EH
                     }
                 );
         }
+
+        template < typename TA , typename TB ,
+                   typename = typename std::enable_if< 
+                       is_same_size< TA , TB >::value &&
+                       std::is_same< bool , typename expression_traits< TA >::result_type >::value &&
+                       std::is_same< bool , typename expression_traits< TB >::result_type >::value
+                   >::type >
+        _ehm_inline
+        auto operator && ( const Expression< TA >& e1 , const Expression< TB >& e2 )
+        {
+            return Expressions::make_binary( e1 , e2 ,
+                    []( bool a , bool b )->bool
+                    {
+                        return a && b;
+                    }
+                );
+        }
+        template < typename TA , typename TB ,
+                   typename = typename std::enable_if< 
+                       is_same_size< TA , TB >::value &&
+                       std::is_same< bool , typename expression_traits< TA >::result_type >::value &&
+                       std::is_same< bool , typename expression_traits< TB >::result_type >::value
+                   >::type >
+        _ehm_inline
+        auto operator || ( const Expression< TA >& e1 , const Expression< TB >& e2 )
+        {
+            return Expressions::make_binary( e1 , e2 ,
+                    []( bool a , bool b )->bool
+                    {
+                        return a || b;
+                    }
+                );
+        }
     };
 };

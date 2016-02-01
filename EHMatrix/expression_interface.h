@@ -720,7 +720,7 @@ namespace EH
                 Diagonal() -= exp;
                 return *this;
             }
-            template < typename SFINE >
+            template < typename SFINE = CRTP >
             typename std::enable_if<
                 is_square< SFINE >::value ,
                 CRTP&
@@ -731,7 +731,7 @@ namespace EH
                 Diagonal() -= scalar;
                 return *this;
             }
-            template < typename SFINE >
+            template < typename SFINE = CRTP >
             typename std::enable_if<
                 is_vector< SFINE >::value ,
                 CRTP&

@@ -6,7 +6,11 @@
 #include "EHMatrix/operators.h"
 #include "EHMatrix/bitset.h"
 #include "EHMatrix/complex.h"
+
+
 #include "EHMatrix/utils.h"
+#include "EHMatrix/aabb.h"
+
 
 #undef _ehm_inline
 #undef _ehm_const

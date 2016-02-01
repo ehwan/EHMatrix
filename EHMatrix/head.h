@@ -306,5 +306,17 @@ namespace EH
                     }
                 );
         }
+
+        template < typename TA >
+        _ehm_inline auto
+        sqrt( const Expression< TA >& e1 )
+        {
+            return Expressions::make_unary( e1 ,
+                    []( auto a )
+                    {
+                        return std::sqrt( a );
+                    }
+                );
+        }
     };  // namespace Matrix
 };  //namespace EH
