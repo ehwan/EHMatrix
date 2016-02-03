@@ -145,10 +145,10 @@ namespace EH
                 }
             }
 
-            _ehm_inline 
+            _ehm_inline
             result_type sum( result_type zero = result_type(0) ) const
             {
-                ForeachConst( 
+                ForeachConst(
                         [ &zero ]( auto x )
                         {
                             zero += x;
@@ -330,12 +330,14 @@ namespace EH
 
 
 
+            using Expression< CRTP >::Diagonal;
             auto
             _ehm_inline
             Diagonal()
             {
                 return Expressions::Diagonal< CRTP >( *this );
             }
+            using Expression< CRTP >::Transpose;
             auto
             _ehm_inline
             Transpose()
@@ -547,7 +549,7 @@ namespace EH
             }
             template < typename ... Ts >
             typename std::enable_if<
-                EH::static_sequence< std::size_t , expression_traits< Ts >::rows*expression_traits< Ts >::cols ... >::sum::value == rows*cols
+                EH::static_sequence< std::size_t , expression_traits< Ts >::rows*expression_traits< Ts >::cols ... >::sum() == rows*cols
             >::type
             _ehm_inline
             FillAggressive( Ts&& ... args )

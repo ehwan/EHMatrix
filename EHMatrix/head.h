@@ -1,4 +1,4 @@
-#pragma once
+# pragma once
 
 #include "Global.h"
 #include "expression_interface.h"
@@ -44,7 +44,7 @@ namespace EH
 
             template < typename ... Ts ,
                        typename = typename std::enable_if<
-                           EH::static_sequence< IndexType , matrix_size< Ts >::value ... >::sum::value == M*N
+                           EH::static_sequence< IndexType , matrix_size< Ts >::value ... >::sum() == M*N
                         >::type >
             constexpr Matrix( Ts&& ... args )
             {
@@ -54,7 +54,7 @@ namespace EH
             template < typename ... Ts , typename = void ,
                        typename = typename std::enable_if<
                            M == N &&
-                           EH::static_sequence< IndexType , matrix_size< Ts >::value ... >::sum::value == M
+                           EH::static_sequence< IndexType , matrix_size< Ts >::value ... >::sum() == M
                         >::type >
             constexpr Matrix( Ts&& ... args )
             {

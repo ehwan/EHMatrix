@@ -109,11 +109,13 @@ namespace EH
             struct QuatConjugate;
 
             template < typename T >
-            auto Quaternion( const expression_size_type< T , 3 , 1 >& v , typename expression_traits< T >::result_type w )
+            auto Quaternion( const expression_size_type< T , 3 , 1 >& v , typename expression_traits< T >::result_type angle )
             {
+                const auto c = std::cos( angle / 2 );
+                const auto s = std::sin( angle / 2 );
                 return Vector< typename expression_traits< T >::result_type , 4 >
                 {
-                    GetBy( v , 0 , 0 ) , GetBy( v , 0 , 1 ) , GetBy( v , 0 , 2 ) , w
+                    s * GetBy( v , 0 , 0 ) , s * GetBy( v , 0 , 1 ) , s * GetBy( v , 0 , 2 ) , c
                 };
             }
             template < typename T >
@@ -139,8 +141,8 @@ namespace EH
             auto Multiply( const expression_size_type< TA , 4 , 1 >& _q1 ,
                            const expression_size_type< TB , 4 , 1 >& _q2 )
             {
-                const typename Expressions::ShouldMakeTemp< TA , 4 >::type q1( _q1 );
-                const typename Expressions::ShouldMakeTemp< TB , 4 >::type q2( _q2 );
+                typename Expressions::ShouldMakeTemp< const TA , 4 >::type q1( _q1 );
+                typename Expressions::ShouldMakeTemp< const TB , 4 >::type q2( _q2 );
 
                 return Matrix< typename expression_traits< TA , TB >::result_type , 4 , 1 >
                 {
@@ -162,8 +164,8 @@ namespace EH
 #define V0 GetBy(v,0,0)
 #define V1 GetBy(v,0,1)
 #define V2 GetBy(v,0,2)
-                const typename Expressions::ShouldMakeTemp< TA , 8 >::type q( _q );
-                const typename Expressions::ShouldMakeTemp< TB , 3 >::type v( _v );
+                const typename Expressions::ShouldMakeTemp< const TA , 8 >::type q( _q );
+                typename Expressions::ShouldMakeTemp< const TB , 3 >::type v( _v );
 
                 return Vector< typename expression_traits< TA , TB >::result_type , 3 >
                 {

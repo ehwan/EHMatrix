@@ -2,6 +2,7 @@
 
 #include "Global.h"
 #include "expression_traits.h"
+#include "complex.h"
 
 namespace EH
 {
@@ -47,6 +48,43 @@ namespace EH
                 // now, y = x * coeff + offset;
                 return FirstOrderMatrix< OutN >( coeff , offset );
             }
+
+            template < typename TA , typename TB >
+            auto PerspectiveMatrix( const expression_size_type< TA , 3 , 1 >& min ,
+                                    const expression_size_type< TB , 3 , 1 >& max ,
+                                    float nearl )
+            {
+                const Vector< float , 3 > sizeI = 1.0f / ( max - min );
+                const Vector< float , 3 > mmid = ( min + max ) * sizeI;
+
+                Matrix< float , 4 > ret =
+                {
+                    2 * nearl * sizeI.x , 0 , 0 , 0 ,
+                    0 , 2 * nearl * sizeI.y , 0 , 0 ,
+                    mmid.x , mmid.y , -mmid.z , -1 ,
+                    0 , 0 , 2 * sizeI.z , -2 * min[2] * max[2] * sizeI.z , 0
+                };
+                //mmid.z , 2 * sizei.Z;
+
+                return ret;
+            }
+
+            // x pitch
+            // y yaw
+            // z roll
+            template < typename TA >
+            auto EyeMatrix( const expression_size_type< TA , 3 , 1 >& angle )
+            {
+                const Vector< float , 4 > pq = Quaternion::Quaternion( Vector< float , 3 >( 1 , 0 , 0 ) , angle[0] );
+                const Vector< float , 4 > yq = Quaternion::Quaternion( Vector< float , 3 >( 0 , 1 , 0 ) , angle[1] );
+                const Vector< float , 4 > zq = Quaternion::Multiply( pq , yq );
+
+                const Vector< float , 3 > zaxis = Quaternion::Multiply( zq , Vector< float , 3 >( 0 , 0 , 1 ) );
+                const Vector< float , 4 > rq = Quaternion::Quaternion( zaxis , angle[2] );
+
+                const Vector< float , 4 > xq = Quaternion::Multiply( rq , yq );
+                //const Vector< float , 3 > xaxis = Quaternion::Multiply( xq , Vector< float , 3 >( 1 , 0 , 0 ) );
+            }
         };  // namespace Util
     };  // namespace Matrix
-};  // namespace EH
+}; //  namespace EH
