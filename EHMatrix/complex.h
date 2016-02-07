@@ -4,30 +4,123 @@
 #include "expressions.h"
 #include "expression_traits.h"
 
+#include "head.h"
+
 namespace EH
 {
     namespace Matrix
     {
+        template < typename T = float >
+        struct Complex : Vector< T , 2 >
+        {
+            using Vector< T , 2 >::operator=;
+            constexpr explicit Complex( T arg ) :
+                Vector< T , 2 >( std::cos( arg ) , std::sin( arg ) )
+            {
+            }
+            template < typename TA >
+            Complex( const expression_vector_size_type< TA , 2 >& v ) :
+                Vector< T , 2 >( GetByVector( v , 0 ) , GetByVector( v , 1 ) )
+            {
+            }
+            Complex( T r , T i ) :
+                Vector< T , 2 >( r , i )
+            {
+            }
+
+            using Vector< T , 2 >::Get;
+            inline auto Conjugate() const
+            {
+                return Complex< T >( Get( 0 ) , -Get( 1 ) );
+            }
+            auto Arg() const
+            {
+                return std::atan2( Get( 1 ) , Get( 0 ) );
+            }
+        };
+        template < typename TA >
+        auto operator * ( const Complex< TA >& c1 , const Vector< TA , 2 >& c2 )
+        {
+            return Complex< TA >( c1[0]*c2[0] - c1[1]*c2[1] , c1[0]*c2[1] + c1[1]*c2[0] );
+        }
+
+        template < typename T = float >
+        struct Quaternion : Vector< T , 4 >
+        {
+            using Vector< T , 4 >::operator =;
+            explicit Quaternion( const Vector< T , 3 >& axis )
+            {
+                using result_type = T;
+                const result_type l = axis.Length();
+                const result_type sinc =
+                    l==result_type( 0 ) ?
+                        result_type( 0 ) :
+                        std::sin( l/2  )/l;
+                this->FillAggressive( sinc * axis[0] , sinc * axis[1] , sinc * axis[2] , std::cos( l/2 ) );
+            }
+            template < typename TA , typename = void >
+            Quaternion( const expression_vector_size_type< TA , 4 >& v ) :
+                Vector< T , 4 >( GetByVector( v , 0 ) , GetByVector( v , 1 ) , GetByVector( v , 2 ) , GetByVector( v , 3 ) )
+            {
+            }
+            template < typename TA >
+            Quaternion( const expression_vector_size_type< TA , 3 >& v3 , T angle )
+            {
+                T c = std::cos( angle / 2 );
+                T s = std::sin( angle / 2 );
+
+                this->FillAggressive( s*GetByVector( v3 , 0 ) , s*GetByVector( v3 , 1 ) , s*GetByVector( v3 , 2 ) , c );
+            }
+            Quaternion( T v0 , T v1 , T v2 , T v3 ) :
+                Vector< T , 4 >( v0 , v1 , v2 , v3 )
+            {
+            }
+
+            using Vector< T , 4 >::Get;
+            inline auto Conjugate() const
+            {
+                return Quaternion< T >( -Get( 0 ) , -Get( 1 ) , -Get( 2 ) , Get( 3 ) );
+            }
+
+            using Vector< T , 4 >::x;
+            using Vector< T , 4 >::y;
+            using Vector< T , 4 >::z;
+            using Vector< T , 4 >::w;
+            auto matrix() const
+            {
+                return Matrix< T , 3 >
+                    (
+                     x*x - y*y - z*z + w*w , 2 * ( w*z + x*y ) , 2 * ( x*z - y*w ) ,
+                     2 * ( x*y - z*w ) , -x*x + y*y - z*z + w*w , 2 * ( x*w + y*z ) ,
+                     2 * ( x*z + y*w ) , 2 * ( -x*w + y*z ) , -x*x - y*y + z*z + w*w
+                    );
+            }
+            auto operator () ( const Vector< T , 3 >& v ) const
+            {
+                return Vector< T , 3 >
+                    (
+                        (x*x - y*y - z*z + w*w)*v.x + 2 * ( x*y - z*w )*v.y + 2 * ( x*z + y*w )*v.z ,
+                        2 * ( w*z + x*y )*v.x + (-x*x + y*y - z*z + w*w)*v.y +  2 * ( -x*w + y*z )*v.z ,
+                        2 * ( x*z - y*w )*v.x + 2 * ( x*w + y*z )*v.y + (-x*x - y*y + z*z + w*w)*v.z
+                    );
+            }
+        };
+
+        template < typename TA >
+        auto operator * ( const Quaternion< TA >& q1 , const Vector< TA , 4 >& q2 )
+        {
+            return Quaternion< TA >
+                (
+                 q1[0]*q2[3] + q1[3]*q2[0] + q1[1]*q2[2] - q1[2]*q2[1] ,
+                 q1[1]*q2[3] + q1[3]*q2[1] + q1[2]*q2[0] - q1[0]*q2[2] ,
+                 q1[2]*q2[3] + q1[3]*q2[2] + q1[0]*q2[1] - q1[1]*q2[0] ,
+                 -q1[0]*q2[0] - q1[1]*q2[1] - q1[2]*q2[2] + q1[3]*q2[3]
+                );
+        }
+
+        /*
         namespace Complex
         {
-            template < typename T >
-            struct ComplexConjugate;
-            template < typename TA , typename TB >
-            struct ComplexMultiply;
-
-            template < typename T = float , typename ARG >
-            auto constexpr Complex( const ARG theta )
-            {
-                return Matrix< T , 2 , 1 >
-                (
-                    std::cos( theta ) , std::sin( theta )
-                );
-            }
-            template < typename T >
-            auto Conjugate( const expression_size_type< T , 2 , 1 >& c )
-            {
-                return ComplexConjugate< T >( c );
-            }
 
             template < typename TA , typename TB >
             auto Multiply( const expression_size_type< TA , 2 , 1 >& _c1 ,
@@ -36,106 +129,13 @@ namespace EH
                 return ComplexMultiply< TA , TB >( _c1 , _c2 );
             }
 
-            template < typename T >
-            auto Arg( const expression_size_type< T , 2 , 1 >& c )
-            {
-                return std::atan2( GetBy( c , 0 , 1 ) , GetBy( c , 0 , 0 ) );
-            }
 
-
-
-
-            template < typename TA >
-            struct ComplexConjugate :
-                Expression< ComplexConjugate< TA > >
-            {
-                using typename Expression< ComplexConjugate< TA > >::result_type;
-
-                auto_reference< const TA > a;
-                
-
-                ComplexConjugate( const auto_reference< TA > _a ) :
-                    a( _a )
-                {
-                }
-
-                _ehm_inline result_type Get( IndexType i ) const
-                {
-                    return -GetBy( a , i ) * MAKE_SIGNED( i );
-                }
-                _ehm_inline result_type Get( IndexType x , IndexType i ) const
-                {
-                    return -GetBy( a , 0 , i ) * MAKE_SIGNED( i );
-                }
-            };
-
-
-
-
-
-            template < typename TA , typename TB >
-            struct ComplexMultiply :
-                Expression< ComplexMultiply< TA , TB > >
-            {
-                using typename Expression< ComplexMultiply< TA , TB > >::result_type;
-                typename Expressions::ShouldMakeTemp< const TA , 2 >::type a;
-                typename Expressions::ShouldMakeTemp< const TB , 2 >::type b;
-
-                ComplexMultiply( auto_reference< const TA > _a , auto_reference< const TB > _b ) :
-                    a( _a ) , b( _b )
-                {
-                }
-
-                // a0b0 - a1b1
-                // a0b1 + a1b0
-                _ehm_inline result_type Get( IndexType i ) const
-                {
-                    return GetBy( a , 0 , 0 )*GetBy( b , 0 , i ) + MAKE_SIGNED( i )*GetBy( a , 0 , 1 )*GetBy( b , 0 , i==0 );
-                }
-                _ehm_inline result_type Get( IndexType x , IndexType i ) const
-                {
-                    return GetBy( a , 0 , 0 )*GetBy( b , 0 , i ) + MAKE_SIGNED( i )*GetBy( a , 0 , 1 )*GetBy( b , 0 , i==0 );
-                }
-
-            };
-
-
-        };  // namespace Complex
 
 
         namespace Quaternion
         {
             template < typename TA >
             struct QuatConjugate;
-
-            template < typename T >
-            auto Quaternion( const expression_size_type< T , 3 , 1 >& v , typename expression_traits< T >::result_type angle )
-            {
-                const auto c = std::cos( angle / 2 );
-                const auto s = std::sin( angle / 2 );
-                return Vector< typename expression_traits< T >::result_type , 4 >
-                {
-                    s * GetBy( v , 0 , 0 ) , s * GetBy( v , 0 , 1 ) , s * GetBy( v , 0 , 2 ) , c
-                };
-            }
-            template < typename T >
-            auto Quaternion( const Vector< T , 3 >& axis )
-            {
-                using result_type = typename expression_traits< T >::result_type;
-                const result_type l = axis.Length();
-                const result_type sinc =
-                    l==result_type( 0 ) ?
-                        result_type( 0 ) :
-                        std::sin( l/2  )/l;
-                return Quaternion( axis * sinc , std::cos( l/2 ) );
-            }
-
-
-            template < typename T >
-            auto Conjugate( const expression_size_type< T , 4 , 1 >& q )
-            {
-                return QuatConjugate< T >( q );
-            }
 
             template < typename TA , typename TB >
             auto Multiply( const expression_size_type< TA , 4 , 1 >& _q1 ,
@@ -255,57 +255,6 @@ namespace EH
 #undef Q2
 #undef Q3
             }
-
-
-            template < typename TA >
-            struct QuatConjugate :
-                Expression< QuatConjugate< TA > >
-            {
-                using typename Expression< QuatConjugate< TA > >::result_type;
-                const auto_reference< TA > a;
-
-                QuatConjugate( auto_reference< TA > _a ) :
-                    a( _a )
-                {
-                }
-
-                _ehm_inline result_type Get( IndexType i ) const
-                {
-                    return GetBy( a , i ) * MAKE_SIGNED( i==3 );
-                }
-                _ehm_inline result_type Get( IndexType x , IndexType i ) const
-                {
-                    return GetBy( a , 0 , i ) * MAKE_SIGNED( i==3 );
-                }
-            };
-        };  // namespace Quaternion
-
-
-        template < typename TA >
-        struct expression_traits< Complex::ComplexConjugate< TA > > : expression_traits< TA >
-        {
-            _ehm_const int operations = expression_traits< TA >::operations + 1;
-            _ehm_const bool catch_reference = false;
-        };
-        template < typename TA , typename TB >
-        struct expression_traits< Complex::ComplexMultiply< TA , TB > > : expression_traits< TA , TB >
-        {
-            using tempA = Expressions::ShouldMakeTemp< TA , 2 >;
-            using tempB = Expressions::ShouldMakeTemp< TB , 2 >;
-            _ehm_const bool is_single_index = true;
-            _ehm_const bool is_restrict     = tempA::value && tempB::value;
-            _ehm_const bool catch_reference = tempA::value || tempB::value;
-
-            _ehm_const int operations = expression_traits< TA >::operations + expression_traits< TB >::operations + 2;
-        };
-        template < typename TA >
-        struct expression_traits< Quaternion::QuatConjugate< TA > > : expression_traits< TA >
-        {
-            _ehm_const int operations = expression_traits< TA >::operations + 1;
-            _ehm_const bool catch_reference = false;
-        };
-
-/*
             */
     };  // namespace Matrix
 };  // namespace EH

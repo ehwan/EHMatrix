@@ -49,41 +49,62 @@ namespace EH
                 return FirstOrderMatrix< OutN >( coeff , offset );
             }
 
-            template < typename TA , typename TB >
-            auto PerspectiveMatrix( const expression_size_type< TA , 3 , 1 >& min ,
-                                    const expression_size_type< TB , 3 , 1 >& max ,
-                                    float nearl )
+            template < typename TA = float >
+            auto PerspectiveMatrix( const Vector< float , 3 >& min ,
+                                    const Vector< float , 3 >& max )
             {
                 const Vector< float , 3 > sizeI = 1.0f / ( max - min );
                 const Vector< float , 3 > mmid = ( min + max ) * sizeI;
 
                 Matrix< float , 4 > ret =
                 {
-                    2 * nearl * sizeI.x , 0 , 0 , 0 ,
-                    0 , 2 * nearl * sizeI.y , 0 , 0 ,
+                    2 * min.z*sizeI.x , 0 , 0 , 0 ,
+                    0 , 2 * min.z*sizeI.y , 0 , 0 ,
                     mmid.x , mmid.y , -mmid.z , -1 ,
-                    0 , 0 , 2 * sizeI.z , -2 * min[2] * max[2] * sizeI.z , 0
+                    0 , 0 , -2 * min.z*max.z*sizeI.z , 0
                 };
                 //mmid.z , 2 * sizei.Z;
 
                 return ret;
             }
+            template < typename TA = float >
+            constexpr auto PerspectiveMatrix( float up , float down , float left , float right , float near , float far )
+            {
+                const float upt = std::tan( up );
+                const float downt = std::tan( down );
+                const float leftt = std::tan( left );
+                const float rightt = std::tan( right );
+
+                return PerspectiveMatrix( { -leftt * near , -downt * near , near } , { rightt * near , upt * near , far } );
+            }
 
             // x pitch
             // y yaw
             // z roll
-            template < typename TA >
-            auto EyeMatrix( const expression_size_type< TA , 3 , 1 >& angle )
+            template < typename TA = float >
+            auto EyeMatrix( const Vector< float , 3 >& angle )
             {
-                const Vector< float , 4 > pq = Quaternion::Quaternion( Vector< float , 3 >( 1 , 0 , 0 ) , angle[0] );
-                const Vector< float , 4 > yq = Quaternion::Quaternion( Vector< float , 3 >( 0 , 1 , 0 ) , angle[1] );
-                const Vector< float , 4 > zq = Quaternion::Multiply( pq , yq );
+                // pitch quaternion
+                auto pq = Quaternion< float >( Vector< float , 3 >{ 1 , 0 , 0 } , angle[0] );
+                // yaw quaternion
+                auto yq = Quaternion< float >( Vector< float , 3 >{ 0 , 1 , 0 } , angle[1] );
 
-                const Vector< float , 3 > zaxis = Quaternion::Multiply( zq , Vector< float , 3 >( 0 , 0 , 1 ) );
-                const Vector< float , 4 > rq = Quaternion::Quaternion( zaxis , angle[2] );
+                auto zq = yq * pq;
 
-                const Vector< float , 4 > xq = Quaternion::Multiply( rq , yq );
-                //const Vector< float , 3 > xaxis = Quaternion::Multiply( xq , Vector< float , 3 >( 1 , 0 , 0 ) );
+                auto zaxis = zq( { 0 , 0 , 1 } );
+                // roll quaternion
+                auto rq = Quaternion< float >( zaxis , angle[2] );
+
+                auto xq = rq * yq;
+                auto xaxis = xq( { 1 , 0 , 0 } );
+
+                return Matrix< float , 3 >( xaxis , Cross( zaxis , xaxis ) , zaxis );
+            }
+            template < typename TA = float >
+            auto EyeMatrix( const Matrix< float , 3 >& axis , const Vector< float , 3 >& pos )
+            {
+                const Matrix< float , 3 > tr = axis.Transpose();
+                return Matrix< float , 4 >( tr , 0 , 0 , 0 , -tr * pos , 1 );
             }
         };  // namespace Util
     };  // namespace Matrix

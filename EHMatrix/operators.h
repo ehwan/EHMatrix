@@ -44,6 +44,16 @@ namespace EH
                     }
                 );
         }
+        template < typename TA >
+        auto operator / ( typename expression_traits< TA >::result_type scalar , const Expression< TA >& exp )
+        {
+            return Expressions::make_unary(  exp ,
+                    [ scalar ]( auto x )
+                    {
+                        return scalar / x;
+                    }
+                );
+        }
 
         template < typename TA , typename TB ,
                    typename = typename std::enable_if< is_same_size< TA , TB >::value >::type

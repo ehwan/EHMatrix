@@ -19,6 +19,9 @@ using vec = mat< MEMBER_TYPE , SIZE  , 1 >;
 
 int main()
 {
+    EH::Matrix::Util::EyeMatrix( { std::atan( 1 ) , 0 , 0 } ).Log();
+
+    return 0;
     {
         vec< float , 2 > v1( 0 , 1 );
         vec< float , 2 > v2( 1 , 2 );
@@ -195,4 +198,5 @@ int main()
     {
         // do something if all components of m1 is equals to 2;
     }
+
 }

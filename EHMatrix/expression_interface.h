@@ -39,41 +39,51 @@ namespace EH
             _ehm_const IndexType rows            = expression_traits< CRTP >::rows;
             _ehm_const IndexType cols            = expression_traits< CRTP >::cols;
 
-            constexpr _ehm_inline operator       CRTP& ()       { return static_cast<       CRTP& >( *this ); }
-            constexpr _ehm_inline operator const CRTP& () const { return static_cast< const CRTP& >( *this ); }
+            constexpr inline operator       CRTP& ()       { return static_cast<       CRTP& >( *this ); }
+            constexpr inline operator const CRTP& () const { return static_cast< const CRTP& >( *this ); }
 
             // reading
 
             template < bool SFINE = is_single_index >
             typename std::enable_if< SFINE , result_type >::type
-            constexpr _ehm_inline
+            constexpr inline
             Get( IndexType i ) const
             {
                 return GetBy( static_cast< const CRTP& >( *this ) , i );
             }
             result_type
-            constexpr _ehm_inline
+            constexpr inline
             Get( IndexType x , IndexType y ) const
             {
                 return GetBy( static_cast< const CRTP& >( *this ) , x , y );
             }
 
 
-            constexpr _ehm_inline
+            constexpr inline
             result_type operator [] ( IndexType i ) const
             {
                 return Get( i );
             }
 
 
+            inline auto
+            operator - () const
+            {
+                return Expressions::make_unary( *this ,
+                        []( auto x )
+                        {
+                            return -x;
+                        }
+                    );
+            }
             auto
-            _ehm_inline
+            inline
             Diagonal() const
             {
                 return Expressions::Diagonal< const CRTP >( *this );
             }
             auto
-            _ehm_inline
+            inline
             Transpose() const
             {
                 return Expressions::Transpose< const CRTP >( *this );
@@ -82,7 +92,7 @@ namespace EH
             template < typename TO ,
                        typename = typename std::enable_if< std::is_same< TO , result_type >::value == false >::type >
             auto
-            _ehm_inline
+            inline
             Convert() const
             {
                 return Expressions::make_unary( *this ,
@@ -95,7 +105,7 @@ namespace EH
             template < typename TO , typename = void ,
                        typename = typename std::enable_if< std::is_same< TO , result_type >::value >::type >
             auto
-            _ehm_inline
+            inline
             Convert() const
             {
                 return *this;
@@ -103,19 +113,19 @@ namespace EH
 
             template < IndexType M , IndexType N >
             auto
-            constexpr _ehm_inline
+            constexpr inline
             SubMatrix( const IndexType X , IndexType Y ) const
             {
                 return Expressions::SubMatrix< const CRTP , M , N >( *this , X , Y );
             }
             auto
-            constexpr _ehm_inline
+            constexpr inline
             Column( const IndexType X ) const
             {
                 return Expressions::SubMatrix< const CRTP , rows , 1 >( *this , X , 0 );
             }
             auto
-            constexpr _ehm_inline
+            constexpr inline
             Row( const IndexType Y ) const
             {
                 return Expressions::SubMatrix< const CRTP , 1 , cols >( *this , 0 , Y );
@@ -123,7 +133,7 @@ namespace EH
 
             template < typename FUNC , bool SFINE = is_single_index >
             typename std::enable_if< SFINE >::type
-            constexpr _ehm_inline
+            constexpr inline
             ForeachConst( FUNC&& func ) const
             {
                 for( IndexType i=0; i<cols*rows; ++i )
@@ -133,7 +143,7 @@ namespace EH
             }
             template < typename FUNC , bool SFINE = is_single_index >
             typename std::enable_if< SFINE == false >::type
-            constexpr _ehm_inline
+            constexpr inline
             ForeachConst( FUNC&& func ) const
             {
                 for( IndexType x=0; x<cols; ++x )
@@ -145,7 +155,7 @@ namespace EH
                 }
             }
 
-            _ehm_inline
+            inline
             result_type sum( result_type zero = result_type(0) ) const
             {
                 ForeachConst(
@@ -157,13 +167,13 @@ namespace EH
                 return zero;
             }
 
-            constexpr _ehm_inline
+            constexpr inline
             matrix_type< CRTP >  matrix() const
             {
                 return Matrix< result_type , rows , cols >( *this );
             }
             template < typename TO >
-            _ehm_inline
+            inline
             typename std::conditional< is_assign_restrict< TO , CRTP >::value ,
                                        const CRTP& ,
                                        Matrix< result_type , rows , cols >
@@ -189,7 +199,7 @@ namespace EH
             }
             template < typename SFINE = CRTP >
             typename std::enable_if< is_vector< SFINE >::value , decltype( std::sqrt( result_type(0) ) ) >::type
-            _ehm_inline
+            inline
             Length() const
             {
                 return std::sqrt( LengthSquared() );
@@ -236,7 +246,7 @@ namespace EH
             }
 
             template < typename SFINE = result_type , typename = typename std::enable_if< std::is_same< bool , SFINE >::value >::type >
-            _ehm_inline operator bool () const { return all(); }
+            inline operator bool () const { return all(); }
 
             template < typename SFINE = result_type >
             typename std::enable_if< std::is_same< bool , SFINE >::value &&
@@ -269,7 +279,7 @@ namespace EH
             }
 
             template < typename SFINE = result_type , typename = typename std::enable_if< std::is_same< bool , SFINE >::value >::type >
-            _ehm_inline operator std::bitset< rows*cols >() const { return bitset(); }
+            inline operator std::bitset< rows*cols >() const { return bitset(); }
 
 
             const CRTP& Log() const
@@ -301,12 +311,12 @@ namespace EH
             using parent::is_restrict;
 
 
-            constexpr _ehm_inline operator       CRTP& ()       { return static_cast<       CRTP& >( *this ); }
-            constexpr _ehm_inline operator const CRTP& () const { return static_cast< const CRTP& >( *this ); }
+            constexpr inline operator       CRTP& ()       { return static_cast<       CRTP& >( *this ); }
+            constexpr inline operator const CRTP& () const { return static_cast< const CRTP& >( *this ); }
 
 
             using parent::operator[];
-            constexpr _ehm_inline
+            constexpr inline
             result_type& operator [] ( IndexType i )
             {
                 return Ref( i );
@@ -314,14 +324,14 @@ namespace EH
 
 
             // get reference
-            constexpr _ehm_inline
+            constexpr inline
             result_type&
             Ref( IndexType i )
             {
                 return RefBy( static_cast< CRTP& >( *this ) , i );
             }
 
-            constexpr _ehm_inline
+            constexpr inline
             result_type&
             Ref( IndexType x , IndexType y )
             {
@@ -332,14 +342,14 @@ namespace EH
 
             using Expression< CRTP >::Diagonal;
             auto
-            _ehm_inline
+            inline
             Diagonal()
             {
                 return Expressions::Diagonal< CRTP >( *this );
             }
             using Expression< CRTP >::Transpose;
             auto
-            _ehm_inline
+            inline
             Transpose()
             {
                 return Expressions::Transpose< CRTP >( *this );
@@ -348,19 +358,21 @@ namespace EH
 
             template < IndexType M , IndexType N >
             auto
-            constexpr _ehm_inline
+            constexpr inline
             SubMatrix( const IndexType X , IndexType Y )
             {
                 return Expressions::SubMatrix< CRTP , M , N >( *this , X , Y );
             }
+            using Expression< CRTP >::Column;
             auto
-            constexpr _ehm_inline
+            constexpr inline
             Column( const IndexType X )
             {
                 return Expressions::SubMatrix< CRTP , rows , 1 >( *this , X , 0 );
             }
+            using Expression< CRTP >::Row;
             auto
-            constexpr _ehm_inline
+            constexpr inline
             Row( const IndexType Y )
             {
                 return Expressions::SubMatrix< CRTP , 1 , cols >( *this , 0 , Y );
@@ -370,7 +382,7 @@ namespace EH
 
             template < typename FUNC , bool SFINE = is_single_index >
             typename std::enable_if< SFINE >::type
-            constexpr _ehm_inline
+            constexpr inline
             Foreach( FUNC&& func )
             {
                 for( IndexType i=0; i<cols*rows; ++i )
@@ -380,7 +392,7 @@ namespace EH
             }
             template < typename FUNC , bool SFINE = is_single_index >
             typename std::enable_if< SFINE == false >::type
-            constexpr _ehm_inline
+            constexpr inline
             Foreach( FUNC&& func )
             {
                 for( IndexType x=0; x<cols; ++x )
@@ -393,7 +405,7 @@ namespace EH
             }
             template < typename FUNC , bool SFINE = is_single_index , typename IterType >
             typename std::enable_if< SFINE >::type
-            constexpr _ehm_inline
+            constexpr inline
             Foreach( IterType&& begin , IterType&& end , FUNC&& func )
             {
                 assert( std::distance( begin , end ) == rows * cols );
@@ -404,7 +416,7 @@ namespace EH
             }
             template < typename FUNC , bool SFINE = is_single_index , typename IterType >
             typename std::enable_if< SFINE == false >::type
-            constexpr _ehm_inline
+            constexpr inline
             Foreach( IterType&& begin , IterType&& end , FUNC&& func )
             {
                 assert( std::distance( begin , end ) == rows * cols );
@@ -419,19 +431,64 @@ namespace EH
 
 
 
-            template < IndexType OX = 0 , IndexType OY = 0 , IndexType M0 = rows , IndexType N0 = cols , IndexType _LEFT ,
+
+
+            /*
+            template < IndexType OX = 0 , IndexType OY = 0 , IndexType M0 = rows , IndexType N0 = cols , IndexType _LEFT = 0 ,
                        typename T0 , typename ... Ts , typename FUNC >
-            typename std::enable_if< _LEFT!=0 >::type
-            constexpr _ehm_inline
+            typename std::enable_if<
+                _LEFT == 0 &&
+                expression_traits< T0 >::rows == M0 &&
+                expression_traits< T0 >::cols == N0 &&
+
+            >::type
+            constexpr inline
             AggressiveForeach( FUNC&& func , T0&& arg0 , Ts&& ... args )
             {
-                constexpr const IndexType _SIZE = expression_traits< T0 >::rows * expression_traits< T0 >::cols;
-                static_assert( _SIZE <= _LEFT , "Invalid expression size for aggressive assign" );
-                AggressiveForeach< OX , OY , M0 , N0 , _LEFT - _SIZE >(
-                    std::forward< FUNC >( func ) ,
-                    std::forward< Ts >( args )...
-                );
             }
+
+            template < IndexType OX = 0 , IndexType OY = 0 , IndexType M0 = rows , IndexType N0 = cols , IndexType _LEFT = 0 ,
+                       typename T0 , typename ... Ts , typename FUNC >
+            typename std::enable_if<
+                _LEFT == 0 &&
+                expression_traits< T0 >::rows == M0 &&
+                expression_traits< T0 >::cols == N0 &&
+            >::type
+            constexpr inline
+            AggressiveForeach( FUNC&& func , T0&& arg0 , Ts&& ... args )
+            {
+            }
+
+            template < IndexType OX = 0 , IndexType OY = 0 , IndexType M0 = rows , IndexType N0 = cols , IndexType _LEFT = 0 ,
+                       typename T0 , typename ... Ts , typename FUNC >
+            typename std::enable_if<
+                _LEFT == 0 &&
+                expression_traits< T0 >::rows == M0 &&
+                expression_traits< T0 >::cols == N0 &&
+            >::type
+            constexpr inline
+            AggressiveForeach( FUNC&& func , T0&& arg0 , Ts&& ... args )
+            {
+            }
+
+            template < IndexType OX = 0 , IndexType OY = 0 , IndexType M0 = rows , IndexType N0 = cols , IndexType _LEFT = 0 ,
+                       typename T0 , typename ... Ts , typename FUNC >
+            typename std::enable_if<
+                _LEFT == 0 &&
+                expression_traits< T0 >::rows == M0 &&
+                expression_traits< T0 >::cols == N0 &&
+            >::type
+            constexpr inline
+            AggressiveForeach( FUNC&& func , T0&& arg0 , Ts&& ... args )
+            {
+            }
+
+            */
+
+
+
+
+
             template < IndexType OX = 0 , IndexType OY = 0 , IndexType M0 = rows , IndexType N0 = cols , IndexType _LEFT = 0 ,
                        typename T0 , typename ... Ts , typename FUNC >
             typename std::enable_if<
@@ -442,7 +499,7 @@ namespace EH
                 ( OY != 0 || M0 != rows ||
                 is_single_index == false || expression_traits< T0 >::is_single_index == false )
             >::type
-            constexpr _ehm_inline
+            constexpr inline
             AggressiveForeach( FUNC&& func , T0&& arg0 , Ts&& ... args )
             {
                 for( IndexType x=0; x<N0; ++x )
@@ -463,13 +520,38 @@ namespace EH
                 OY == 0 && M0 == rows &&
                 is_single_index && expression_traits< T0 >::is_single_index
             >::type
-            constexpr _ehm_inline
+            constexpr inline
             AggressiveForeach( FUNC&& func , T0&& arg0 , Ts&& ... args )
             {
                 for( IndexType i=0; i<M0*N0; ++i )
                 {
                     func( RefBy( *this , i + OX*rows ) , GetBy( std::forward< T0 >( arg0 ) , i ) );
                 }
+            }
+
+
+
+
+
+
+
+
+
+
+
+
+            template < IndexType OX = 0 , IndexType OY = 0 , IndexType M0 = rows , IndexType N0 = cols , IndexType _LEFT ,
+                       typename T0 , typename ... Ts , typename FUNC >
+            typename std::enable_if< _LEFT!=0 >::type
+            constexpr inline
+            AggressiveForeach( FUNC&& func , T0&& arg0 , Ts&& ... args )
+            {
+                constexpr const IndexType _SIZE = expression_traits< T0 >::rows * expression_traits< T0 >::cols;
+                static_assert( _SIZE <= _LEFT , "Invalid expression size for aggressive assign" );
+                AggressiveForeach< OX , OY , M0 , N0 , _LEFT - _SIZE >(
+                    std::forward< FUNC >( func ) ,
+                    std::forward< Ts >( args )...
+                );
             }
             template < IndexType OX = 0 , IndexType OY = 0 , IndexType M0 = rows , IndexType N0 = cols , IndexType _LEFT = 0 ,
                        typename T0 , typename ... Ts , typename FUNC >
@@ -478,7 +560,7 @@ namespace EH
                 expression_traits< T0 >::rows == M0 &&
                 expression_traits< T0 >::cols != N0
             >::type
-            constexpr _ehm_inline
+            constexpr inline
             AggressiveForeach( FUNC&& func , T0&& arg0 , Ts&& ... args )
             {
                 constexpr const IndexType _COLS = expression_traits< T0 >::cols;
@@ -498,7 +580,7 @@ namespace EH
                 expression_traits< T0 >::rows != M0 &&
                 expression_traits< T0 >::cols == N0
             >::type
-            constexpr _ehm_inline
+            constexpr inline
             AggressiveForeach( FUNC&& func , T0&& arg0 , Ts&& ... args )
             {
                 constexpr const IndexType _ROWS = expression_traits< T0 >::rows;
@@ -518,7 +600,7 @@ namespace EH
                 expression_traits< T0 >::rows != M0 &&
                 expression_traits< T0 >::cols != N0
             >::type
-            constexpr _ehm_inline
+            constexpr inline
             AggressiveForeach( FUNC&& func , T0&& arg0 , Ts&& ... args )
             {
                 constexpr const IndexType _COLS = expression_traits< T0 >::cols;
@@ -537,7 +619,7 @@ namespace EH
                 );
             }
 
-            constexpr _ehm_inline
+            constexpr inline
             void Fill( const result_type i )
             {
                 Foreach(
@@ -551,7 +633,7 @@ namespace EH
             typename std::enable_if<
                 EH::static_sequence< std::size_t , expression_traits< Ts >::rows*expression_traits< Ts >::cols ... >::sum() == rows*cols
             >::type
-            _ehm_inline
+            inline
             FillAggressive( Ts&& ... args )
             {
                 AggressiveForeach(
@@ -586,7 +668,7 @@ namespace EH
                 is_same_size< TA , CRTP >::value ,
                 CRTP&
             >::type
-            _ehm_inline
+            inline
             operator = ( const Expression< TA >& exp )
             {
                 FillAggressive( exp.template assign_temp< CRTP >() );
@@ -600,7 +682,7 @@ namespace EH
                 vector_size< TA >::value == rows ,
                 CRTP&
             >::type
-            _ehm_inline
+            inline
             operator = ( const Expression< TA >& exp )
             {
                 Fill( 0 );
@@ -612,7 +694,7 @@ namespace EH
                 is_square< SFINE >::value ,
                 CRTP&
             >::type
-            _ehm_inline
+            inline
             operator = ( result_type scalar )
             {
                 Fill( 0 );
@@ -624,7 +706,7 @@ namespace EH
                 is_vector< SFINE >::value ,
                 CRTP&
             >::type
-            _ehm_inline
+            inline
             operator = ( result_type scalar )
             {
                 Fill( scalar );
@@ -637,7 +719,7 @@ namespace EH
                 is_same_size< TA , CRTP >::value ,
                 CRTP&
             >::type
-            _ehm_inline
+            inline
             operator += ( const Expression< TA >& exp )
             {
                 AggressiveForeach(
@@ -656,7 +738,7 @@ namespace EH
                 vector_size< TA >::value == rows ,
                 CRTP&
             >::type
-            _ehm_inline
+            inline
             operator += ( const Expression< TA >& exp )
             {
                 Diagonal() += exp;
@@ -667,7 +749,7 @@ namespace EH
                 is_square< SFINE >::value ,
                 CRTP&
             >::type
-            _ehm_inline
+            inline
             operator += ( result_type scalar )
             {
                 Diagonal() += scalar;
@@ -678,7 +760,7 @@ namespace EH
                 is_vector< SFINE >::value ,
                 CRTP&
             >::type
-            _ehm_inline
+            inline
             operator += ( result_type scalar )
             {
                 Foreach(
@@ -697,7 +779,7 @@ namespace EH
                 is_same_size< CRTP , TA >::value ,
                 CRTP&
             >::type
-            _ehm_inline
+            inline
             operator -= ( const Expression< TA >& exp )
             {
                 AggressiveForeach(
@@ -716,7 +798,7 @@ namespace EH
                 vector_size< TA >::value == rows ,
                 CRTP&
             >::type
-            _ehm_inline
+            inline
             operator -= ( const Expression< TA >& exp )
             {
                 Diagonal() -= exp;
@@ -727,7 +809,7 @@ namespace EH
                 is_square< SFINE >::value ,
                 CRTP&
             >::type
-            _ehm_inline
+            inline
             operator -= ( result_type scalar )
             {
                 Diagonal() -= scalar;
@@ -738,7 +820,7 @@ namespace EH
                 is_vector< SFINE >::value ,
                 CRTP&
             >::type
-            _ehm_inline
+            inline
             operator -= ( result_type scalar )
             {
                 Foreach(
@@ -750,9 +832,7 @@ namespace EH
                 return *this;
             }
 
-            CRTP& _ehm_inline
-            operator *= ( result_type scalar )
-            {
+            inline CRTP& operator *= ( result_type scalar ) {
                 Foreach(
                         [ scalar ]( auto& a )
                         {
@@ -767,8 +847,7 @@ namespace EH
                 vector_size< TA >::value == vector_size< CRTP >::value ,
                 CRTP&
             >::type
-            _ehm_inline
-            operator *= ( const Expression< TA >& exp )
+            inline operator *= ( const Expression< TA >& exp )
             {
                 AggressiveForeach(
                         []( auto& a , auto b )
@@ -786,16 +865,14 @@ namespace EH
                 is_column_vector< CRTP >::value == false ,
                 CRTP&
             >::type
-            _ehm_inline
-            operator *= ( const Expression< TA >& exp )
+            inline operator *= ( const Expression< TA >& exp )
             {
                 FillAggressive( Matrix< result_type , rows , cols >( (*this) * exp ) );
                 return *this;
             }
 
 
-            CRTP& _ehm_inline
-            operator /= ( result_type scalar )
+            inline CRTP& operator /= ( result_type scalar )
             {
                 Foreach(
                         [ scalar ]( auto& a )
@@ -811,8 +888,7 @@ namespace EH
                 vector_size< TA >::value == vector_size< CRTP >::value ,
                 CRTP&
             >::type
-            _ehm_inline
-            operator /= ( const Expression< TA >& exp )
+            inline operator /= ( const Expression< TA >& exp )
             {
                 AggressiveForeach(
                         []( auto& a , auto b )

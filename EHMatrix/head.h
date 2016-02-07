@@ -189,13 +189,13 @@ namespace EH
             is_column_vector< TA >::value && is_column_vector< TB >::value &&
             vector_size< TA >::value == 3 && vector_size< TB >::value == 3 ,
             Matrix< typename expression_traits< TA , TB >::result_type ,
-                    3 , 3 >
+                    3 , 1 >
         >::type
         Cross( const expression_size_type< TA , 3 , 1 >& _a ,
                const expression_size_type< TB , 3 , 1 >& _b )
         {
-            const typename Expressions::ShouldMakeTemp< TA , 2 >::type a( _a );
-            const typename Expressions::ShouldMakeTemp< TB , 2 >::type b( _b );
+            typename Expressions::ShouldMakeTemp< const TA , 2 >::type a( _a );
+            typename Expressions::ShouldMakeTemp< const TB , 2 >::type b( _b );
             return Vector< typename expression_traits< TA , TB >::result_type , 3 >
             {
                 GetBy( a , 0 , 1 )*GetBy( b , 0 , 2 ) - GetBy( a , 0 , 2 )*GetBy( b , 0 , 1 ) ,
@@ -315,6 +315,43 @@ namespace EH
                     []( auto a )
                     {
                         return std::sqrt( a );
+                    }
+                );
+        }
+
+        template < typename T >
+        inline auto
+        clamp( T val , T min , T max )
+        {
+            return std::max( std::min( val , max ) );
+        }
+        template < typename T >
+        inline auto
+        constexpr cycle( T val , T min , T max )
+        {
+            if( val > max ){ return val - ( max - min ); }
+            else if( val < min ){ return val + ( max - min ); }
+            return val;
+        }
+        template < typename T >
+        inline auto 
+        clamp( const Expression< T >& e1 , typename expression_traits< T >::result_type min , typename expression_traits< T >::result_type max )
+        {
+            return Expressions::make_unary( e1 , 
+                    [ min , max ]( auto x )
+                    {
+                        return clamp( x , min , max );
+                    }
+                );
+        }
+        template < typename T >
+        inline auto 
+        cycle( const Expression< T >& e1 , typename expression_traits< T >::result_type min , typename expression_traits< T >::result_type max )
+        {
+            return Expressions::make_unary( e1 , 
+                    [ min , max ]( auto x )
+                    {
+                        return cycle( x , min , max );
                     }
                 );
         }
