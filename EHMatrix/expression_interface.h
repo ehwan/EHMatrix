@@ -428,117 +428,109 @@ namespace EH
                     }
                 }
             }
-
-
-
-
-
-            /*
-            template < IndexType OX = 0 , IndexType OY = 0 , IndexType M0 = rows , IndexType N0 = cols , IndexType _LEFT = 0 ,
-                       typename T0 , typename ... Ts , typename FUNC >
+            template < IndexType OX , IndexType OY ,
+                       typename T0 , typename FUNC >
             typename std::enable_if<
-                _LEFT == 0 &&
-                expression_traits< T0 >::rows == M0 &&
-                expression_traits< T0 >::cols == N0 &&
-
+                OY == 0 && expression_traits< T0 >::rows == rows &&
+                is_single_access< T0 >::value
             >::type
             constexpr inline
-            AggressiveForeach( FUNC&& func , T0&& arg0 , Ts&& ... args )
+            SubForeach( FUNC&& func , T0&& arg0 )
             {
-            }
-
-            template < IndexType OX = 0 , IndexType OY = 0 , IndexType M0 = rows , IndexType N0 = cols , IndexType _LEFT = 0 ,
-                       typename T0 , typename ... Ts , typename FUNC >
-            typename std::enable_if<
-                _LEFT == 0 &&
-                expression_traits< T0 >::rows == M0 &&
-                expression_traits< T0 >::cols == N0 &&
-            >::type
-            constexpr inline
-            AggressiveForeach( FUNC&& func , T0&& arg0 , Ts&& ... args )
-            {
-            }
-
-            template < IndexType OX = 0 , IndexType OY = 0 , IndexType M0 = rows , IndexType N0 = cols , IndexType _LEFT = 0 ,
-                       typename T0 , typename ... Ts , typename FUNC >
-            typename std::enable_if<
-                _LEFT == 0 &&
-                expression_traits< T0 >::rows == M0 &&
-                expression_traits< T0 >::cols == N0 &&
-            >::type
-            constexpr inline
-            AggressiveForeach( FUNC&& func , T0&& arg0 , Ts&& ... args )
-            {
-            }
-
-            template < IndexType OX = 0 , IndexType OY = 0 , IndexType M0 = rows , IndexType N0 = cols , IndexType _LEFT = 0 ,
-                       typename T0 , typename ... Ts , typename FUNC >
-            typename std::enable_if<
-                _LEFT == 0 &&
-                expression_traits< T0 >::rows == M0 &&
-                expression_traits< T0 >::cols == N0 &&
-            >::type
-            constexpr inline
-            AggressiveForeach( FUNC&& func , T0&& arg0 , Ts&& ... args )
-            {
-            }
-
-            */
-
-
-
-
-
-            template < IndexType OX = 0 , IndexType OY = 0 , IndexType M0 = rows , IndexType N0 = cols , IndexType _LEFT = 0 ,
-                       typename T0 , typename ... Ts , typename FUNC >
-            typename std::enable_if<
-                _LEFT == 0 &&
-                expression_traits< T0 >::rows == M0 &&
-                expression_traits< T0 >::cols == N0 &&
-
-                ( OY != 0 || M0 != rows ||
-                is_single_index == false || expression_traits< T0 >::is_single_index == false )
-            >::type
-            constexpr inline
-            AggressiveForeach( FUNC&& func , T0&& arg0 , Ts&& ... args )
-            {
-                for( IndexType x=0; x<N0; ++x )
+                constexpr const IndexType off = OX * expression_traits< T0 >::rows;
+                for( IndexType i=0; i<matrix_size< T0 >::value; ++i )
                 {
-                    for( IndexType y=0; y<M0; ++y )
+                    func( RefBy( *this , off + i ) , GetBy( arg0 , i ) );
+                }
+            }
+            template < IndexType OX , IndexType OY ,
+                       typename T0 , typename FUNC >
+            typename std::enable_if<
+                ( OY != 0 || expression_traits< T0 >::rows != rows ) &&
+                expression_traits< T0 >::cols == 1 &&
+                is_single_access< T0 >::value
+            >::type
+            constexpr inline
+            SubForeach( FUNC&& func , T0&& arg0 )
+            {
+                for( IndexType i=0; i<matrix_size< T0 >::value; ++i )
+                {
+                    func( RefBy( *this , OX , OY + i ) , GetBy( arg0 , i ) );
+                }
+            }
+            template < IndexType OX , IndexType OY ,
+                       typename T0 , typename FUNC >
+            typename std::enable_if<
+                ( OY != 0 || expression_traits< T0 >::rows != rows ) &&
+                expression_traits< T0 >::cols != 1 &&
+                expression_traits< T0 >::rows == 1 &&
+                is_single_access< T0 >::value
+            >::type
+            constexpr inline
+            SubForeach( FUNC&& func , T0&& arg0 )
+            {
+                for( IndexType i=0; i<matrix_size< T0 >::value; ++i )
+                {
+                    func( RefBy( *this , OX + i , OY ) , GetBy( arg0 , i ) );
+                }
+            }
+            template < IndexType OX , IndexType OY ,
+                       typename T0 , typename FUNC >
+            typename std::enable_if<
+                ( OY != 0 || expression_traits< T0 >::rows != rows ) &&
+                expression_traits< T0 >::cols != 1 &&
+                expression_traits< T0 >::rows != 1 &&
+                is_single_access< T0 >::value
+            >::type
+            constexpr inline
+            SubForeach( FUNC&& func , T0&& arg0 )
+            {
+                for( IndexType x=0; x<expression_traits< T0 >::cols; ++x )
+                {
+                    for( IndexType y=0; y<expression_traits< T0 >::rows; ++y )
                     {
-                        func( RefBy( *this , x + OX , y + OY ) , GetBy( std::forward< T0 >( arg0 ) , x , y ) );
+                        func( RefBy( *this , OX + x , OY + y ) , GetBy( arg0 , x , y ) );
                     }
                 }
             }
+
+
+            template < IndexType OX , IndexType OY ,
+                       typename T0 , typename FUNC >
+            typename std::enable_if<
+                is_single_access< T0 >::value == false
+            >::type
+            constexpr inline
+            SubForeach( FUNC&& func , T0&& arg0 )
+            {
+                for( IndexType x=0; x<expression_traits< T0 >::cols; ++x )
+                {
+                    for( IndexType y=0; y<expression_traits< T0 >::rows; ++y )
+                    {
+                        func( RefBy( *this , OX + x , OY + y ) , GetBy( arg0 , x , y ) );
+                    }
+                }
+            }
+
+
+            /*
+             * case single-acessable submatrix
+             *  - vector
+             *  - same rows
+             */
+
             template < IndexType OX = 0 , IndexType OY = 0 , IndexType M0 = rows , IndexType N0 = cols , IndexType _LEFT = 0 ,
                        typename T0 , typename ... Ts , typename FUNC >
             typename std::enable_if<
                 _LEFT == 0 &&
                 expression_traits< T0 >::rows == M0 &&
-                expression_traits< T0 >::cols == N0 &&
-
-                OY == 0 && M0 == rows &&
-                is_single_index && expression_traits< T0 >::is_single_index
+                expression_traits< T0 >::cols == N0
             >::type
             constexpr inline
             AggressiveForeach( FUNC&& func , T0&& arg0 , Ts&& ... args )
             {
-                for( IndexType i=0; i<M0*N0; ++i )
-                {
-                    func( RefBy( *this , i + OX*rows ) , GetBy( std::forward< T0 >( arg0 ) , i ) );
-                }
+                SubForeach< OX , OY >( std::forward< FUNC >( func ) , std::forward< T0 >( arg0 ) );
             }
-
-
-
-
-
-
-
-
-
-
-
 
             template < IndexType OX = 0 , IndexType OY = 0 , IndexType M0 = rows , IndexType N0 = cols , IndexType _LEFT ,
                        typename T0 , typename ... Ts , typename FUNC >

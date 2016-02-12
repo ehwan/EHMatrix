@@ -69,7 +69,7 @@ namespace EH
                 T c = std::cos( angle / 2 );
                 T s = std::sin( angle / 2 );
 
-                this->FillAggressive( s*GetByVector( v3 , 0 ) , s*GetByVector( v3 , 1 ) , s*GetByVector( v3 , 2 ) , c );
+                this->FillAggressive( s*GetBy( v3 , 0 ) , s*GetBy( v3 , 1 ) , s*GetBy( v3 , 2 ) , c );
             }
             Quaternion( T v0 , T v1 , T v2 , T v3 ) :
                 Vector< T , 4 >( v0 , v1 , v2 , v3 )

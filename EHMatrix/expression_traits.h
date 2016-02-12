@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Global.h"
+#include <type_traits>
 
 namespace EH
 {
@@ -98,6 +99,15 @@ namespace EH
         };
 
         template < typename T >
+        struct is_single_access :
+            std::integral_constant<
+                bool ,
+                is_vector< T >::value || expression_traits< T >::is_single_index
+            >
+        {
+        };
+
+        template < typename T >
         using matrix_type = Matrix< typename expression_traits< T >::result_type ,
                                     expression_traits< T >::rows ,
                                     expression_traits< T >::cols >;
@@ -184,144 +194,110 @@ namespace EH
         }
         template < typename TA >
         typename std::enable_if<
-            is_expression< TA >::value &&
             expression_traits< TA >::is_single_index ,
             typename expression_traits< TA >::result_type
         >::type
-        constexpr _ehm_inline
-        GetBy( TA&& a , IndexType i )
+        constexpr inline
+        GetBy( const Expression< TA >& a , IndexType i )
         {
-            return a.Get( i );
+            return static_cast< const TA& >( a ).Get( i );
         }
         template < typename TA >
         typename std::enable_if<
-            is_expression< TA >::value &&
-            expression_traits< TA >::is_single_index == false ,
-            typename expression_traits< TA >::result_type
-        >::type
-        constexpr _ehm_inline
-        GetBy( TA&& a , IndexType i )
-        {
-            ERROR( "Single-index acces is not valid for this expression" );
-            return a.Get( i );
-        }
-        template < typename TA >
-        typename std::enable_if<
-            is_expression< TA >::value &&
-            expression_traits< TA >::is_single_index == false ,
-            typename expression_traits< TA >::result_type
-        >::type
-        constexpr _ehm_inline
-        GetBy( TA&& a , IndexType x , IndexType y )
-        {
-            return a.Get( x , y );
-        }
-        template < typename TA >
-        typename std::enable_if<
-            is_expression< TA >::value &&
-            expression_traits< TA >::is_single_index ,
-            typename expression_traits< TA >::result_type
-        >::type
-        constexpr _ehm_inline
-        GetBy( TA&& a , IndexType x , IndexType y )
-        {
-            return a.Get( y + x * expression_traits< TA >::rows );
-        }
-
-        template < typename TA >
-        typename std::enable_if<
-            is_expression< TA >::value &&
-            is_column_vector< TA >::value ,
-            typename expression_traits< TA >::result_type
-        >::type
-        constexpr _ehm_inline
-        GetByVector( TA&& a , IndexType i )
-        {
-            return GetBy( a , 0 , i );
-        }
-        template < typename TA >
-        typename std::enable_if<
-            is_expression< TA >::value &&
+            expression_traits< TA >::is_single_index == false &&
             is_row_vector< TA >::value ,
             typename expression_traits< TA >::result_type
         >::type
-        constexpr _ehm_inline
-        GetByVector( TA&& a , IndexType i )
+        constexpr inline
+        GetBy( const Expression< TA >& a , IndexType i )
         {
-            return GetBy( a , i , 0 );
-        }
-
-
-
-
-
-        template < typename TA >
-        typename std::enable_if<
-            is_expression< TA >::value &&
-            expression_traits< TA >::is_single_index ,
-            typename expression_traits< TA >::result_type&
-        >::type
-        constexpr _ehm_inline
-        RefBy( TA&& a , IndexType i )
-        {
-            return a.Ref( i );
+            return static_cast< const TA& >( a ).Get( i , 0 );
         }
         template < typename TA >
         typename std::enable_if<
-            is_expression< TA >::value &&
-            expression_traits< TA >::is_single_index == false ,
-            typename expression_traits< TA >::result_type&
-        >::type
-        constexpr _ehm_inline
-        RefBy( TA&& a , IndexType i )
-        {
-            ERROR( "single-index access is not valid for this expression" );
-            return a.Ref( i );
-        }
-        template < typename TA >
-        typename std::enable_if<
-            is_expression< TA >::value &&
-            expression_traits< TA >::is_single_index ,
-            typename expression_traits< TA >::result_type&
-        >::type
-        constexpr _ehm_inline
-        RefBy( TA&& a , IndexType x , IndexType y )
-        {
-            return a.Ref( y + x * expression_traits< TA >::rows );
-        }
-        template < typename TA >
-        typename std::enable_if<
-            is_expression< TA >::value &&
-            expression_traits< TA >::is_single_index == false ,
-            typename expression_traits< TA >::result_type&
-        >::type
-        constexpr _ehm_inline
-        RefBy( TA&& a , IndexType x , IndexType y )
-        {
-            return a.Ref( x , y );
-        }
-        template < typename TA >
-        typename std::enable_if<
-            is_expression< TA >::value &&
+            expression_traits< TA >::is_single_index == false &&
             is_column_vector< TA >::value ,
             typename expression_traits< TA >::result_type
         >::type
-        constexpr _ehm_inline
-        RefByVector( TA&& a , IndexType i )
+        constexpr inline
+        GetBy( const Expression< TA >& a , IndexType i )
         {
-            return RefBy( a , 0 , i );
+            return static_cast< const TA& >( a ).Get( 0 , i );
         }
         template < typename TA >
         typename std::enable_if<
-            is_expression< TA >::value &&
-            is_row_vector< TA >::value ,
+            expression_traits< TA >::is_single_index ,
             typename expression_traits< TA >::result_type
         >::type
-        constexpr _ehm_inline
-        RefByVector( TA&& a , IndexType i )
+        constexpr inline
+        GetBy( const Expression< TA >& a , IndexType x , IndexType y )
         {
-            return RefBy( a , i , 0 );
+            return static_cast< const TA& >( a ).Get( y + x * expression_traits< TA >::rows );
+        }
+        template < typename TA >
+        typename std::enable_if<
+            expression_traits< TA >::is_single_index == false ,
+            typename expression_traits< TA >::result_type
+        >::type
+        constexpr inline
+        GetBy( const Expression< TA >& a , IndexType x , IndexType y )
+        {
+            return static_cast< const TA& >( a ).Get( x , y );
         }
 
+
+
+        template < typename TA >
+        typename std::enable_if<
+            expression_traits< TA >::is_single_index ,
+            typename std::add_lvalue_reference< typename expression_traits< TA >::result_type >::type
+        >::type
+        constexpr inline
+        RefBy( Expression< TA >& a , IndexType i )
+        {
+            return static_cast< TA& >( a ).Ref( i );
+        }
+        template < typename TA >
+        typename std::enable_if<
+            expression_traits< TA >::is_single_index == false &&
+            is_row_vector< TA >::value ,
+            typename std::add_lvalue_reference< typename expression_traits< TA >::result_type >::type
+        >::type
+        constexpr inline
+        RefBy( Expression< TA >& a , IndexType i )
+        {
+            return static_cast< TA& >( a ).Ref( i , 0 );
+        }
+        template < typename TA >
+        typename std::enable_if<
+            expression_traits< TA >::is_single_index == false &&
+            is_column_vector< TA >::value ,
+            typename std::add_lvalue_reference< typename expression_traits< TA >::result_type >::type
+        >::type
+        constexpr inline
+        RefBy( Expression< TA >& a , IndexType i )
+        {
+            return static_cast< TA& >( a ).Ref( 0 , i );
+        }
+        template < typename TA >
+        typename std::enable_if<
+            expression_traits< TA >::is_single_index ,
+            typename std::add_lvalue_reference< typename expression_traits< TA >::result_type >::type
+        >::type
+        constexpr inline
+        RefBy( Expression< TA >& a , IndexType x , IndexType y )
+        {
+            return static_cast< TA& >( a ).Ref( y + x * expression_traits< TA >::rows );
+        }
+        template < typename TA >
+        typename std::enable_if<
+            expression_traits< TA >::is_single_index == false ,
+            typename std::add_lvalue_reference< typename expression_traits< TA >::result_type >::type
+        >::type
+        constexpr inline
+        RefBy( Expression< TA >& a , IndexType x , IndexType y )
+        {
+            return static_cast< TA& >( a ).Ref( x , y );
+        }
     };
 };  // namespace EH

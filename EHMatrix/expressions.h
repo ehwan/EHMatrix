@@ -132,22 +132,14 @@ namespace EH
 
                 const IndexType X , Y;
 
-                SubMatrix( auto_reference< TA >  _a , const IndexType _x , const IndexType _y ) :
+                constexpr SubMatrix( auto_reference< TA >  _a , const IndexType _x , const IndexType _y ) :
                     a( _a ) , X( _x ) , Y( _y )
                 {
                 }
 
-                constexpr _ehm_inline auto Get( IndexType i ) const
-                {
-                    return GetBy( a , i + X*expression_traits< TA >::rows );
-                }
                 constexpr _ehm_inline auto Get( IndexType x , IndexType y ) const
                 {
                     return GetBy( a , x + X , y + Y );
-                }
-                constexpr _ehm_inline auto& Ref( IndexType i )
-                {
-                    return RefBy( a , i + X*expression_traits< TA >::rows );
                 }
                 constexpr _ehm_inline auto& Ref( IndexType x , IndexType y )
                 {
@@ -304,8 +296,7 @@ namespace EH
             //   -original is index accessable AND
             //      -original is vector type
             //      -same M( rows count ) as original
-            _ehm_const bool      is_single_index = expression_traits< TA >::is_single_index &&
-                                                   ( M == expression_traits< TA >::rows || is_vector< TA >::value );
+            _ehm_const bool      is_single_index = false;
             _ehm_const bool      catch_reference = false;
             _ehm_const bool      is_restrict     = false;
 
