@@ -19,9 +19,8 @@ using vec = mat< MEMBER_TYPE , SIZE  , 1 >;
 
 int main()
 {
-    EH::Matrix::Util::EyeMatrix( { std::atan( 1 ) , 0 , 0 } ).Log();
+    auto mat1 = EH::Matrix::Util::EyeMatrix( { std::atan( 1 ) , 0 , 0 } ).Log();
 
-    return 0;
     {
         vec< float , 2 > v1( 0 , 1 );
         vec< float , 2 > v2( 1 , 2 );
@@ -31,6 +30,9 @@ int main()
 
         //v3.Log();
     }
+
+    mat1.Log();
+    return 0;
 
     // 2 by 3 matrix
     // column-major,

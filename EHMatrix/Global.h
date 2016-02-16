@@ -25,9 +25,9 @@ namespace EH
 {
     namespace Matrix
     {
-        using EH::LOG::LOG;
-        using EH::LOG::ERROR;
-        using EH::LOG::LOGR;
+        using EH::LOG;
+        using EH::ERROR;
+        using EH::LOGR;
 
         using IndexType = unsigned int;
 

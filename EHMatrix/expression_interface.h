@@ -131,8 +131,8 @@ namespace EH
                 return Expressions::SubMatrix< const CRTP , 1 , cols >( *this , 0 , Y );
             }
 
-            template < typename FUNC , bool SFINE = is_single_index >
-            typename std::enable_if< SFINE >::type
+            template < typename FUNC , typename SFINE = CRTP >
+            typename std::enable_if< is_single_access< SFINE >::value >::type
             constexpr inline
             ForeachConst( FUNC&& func ) const
             {
@@ -141,8 +141,8 @@ namespace EH
                     func( GetBy( *this , i ) );
                 }
             }
-            template < typename FUNC , bool SFINE = is_single_index >
-            typename std::enable_if< SFINE == false >::type
+            template < typename FUNC , typename SFINE = CRTP >
+            typename std::enable_if< is_single_access< SFINE >::value == false >::type
             constexpr inline
             ForeachConst( FUNC&& func ) const
             {
@@ -177,7 +177,7 @@ namespace EH
             typename std::conditional< is_assign_restrict< TO , CRTP >::value ,
                                        const CRTP& ,
                                        Matrix< result_type , rows , cols >
-                                     >::type
+                     >::type
             assign_temp() const
             {
                 return *this;
@@ -328,14 +328,14 @@ namespace EH
             result_type&
             Ref( IndexType i )
             {
-                return RefBy( static_cast< CRTP& >( *this ) , i );
+                return RefBy( *this , i );
             }
 
             constexpr inline
             result_type&
             Ref( IndexType x , IndexType y )
             {
-                return RefBy( static_cast< CRTP& >( *this ) , x , y );
+                return RefBy( *this , x , y );
             }
 
 
@@ -356,10 +356,11 @@ namespace EH
             }
 
 
+            using Expression< CRTP >::SubMatrix;
             template < IndexType M , IndexType N >
             auto
             constexpr inline
-            SubMatrix( const IndexType X , IndexType Y )
+            SubMatrix( IndexType X , IndexType Y )
             {
                 return Expressions::SubMatrix< CRTP , M , N >( *this , X , Y );
             }
@@ -380,8 +381,8 @@ namespace EH
 
 
 
-            template < typename FUNC , bool SFINE = is_single_index >
-            typename std::enable_if< SFINE >::type
+            template < typename FUNC , typename SFINE = CRTP >
+            typename std::enable_if< is_single_access< SFINE >::value >::type
             constexpr inline
             Foreach( FUNC&& func )
             {
@@ -390,8 +391,8 @@ namespace EH
                     func( RefBy( *this , i ) );
                 }
             }
-            template < typename FUNC , bool SFINE = is_single_index >
-            typename std::enable_if< SFINE == false >::type
+            template < typename FUNC , typename SFINE = CRTP >
+            typename std::enable_if< is_single_access< SFINE >::value == false >::type
             constexpr inline
             Foreach( FUNC&& func )
             {
@@ -403,8 +404,8 @@ namespace EH
                     }
                 }
             }
-            template < typename FUNC , bool SFINE = is_single_index , typename IterType >
-            typename std::enable_if< SFINE >::type
+            template < typename FUNC , typename SFINE = CRTP , typename IterType >
+            typename std::enable_if< is_single_access< SFINE >::value >::type
             constexpr inline
             Foreach( IterType&& begin , IterType&& end , FUNC&& func )
             {
@@ -414,8 +415,8 @@ namespace EH
                     func( RefBy( *this , i ) , *(begin++) );
                 }
             }
-            template < typename FUNC , bool SFINE = is_single_index , typename IterType >
-            typename std::enable_if< SFINE == false >::type
+            template < typename FUNC , typename SFINE = CRTP , typename IterType >
+            typename std::enable_if< is_single_access< SFINE >::value == false >::type
             constexpr inline
             Foreach( IterType&& begin , IterType&& end , FUNC&& func )
             {
