@@ -38,6 +38,27 @@ namespace EH
         template < typename T , IndexType N >
         using Vector = Matrix< T , N , 1 >;
 
+        template < typename T >
+        using vec2 = Vector< T , 2 >;
+        template < typename T >
+        using vec3 = Vector< T , 3 >;
+        template < typename T >
+        using vec4 = Vector< T , 4 >;
+
+        template < typename T >
+        using mat2 = Matrix< T , 2 >;
+        template < typename T >
+        using mat3 = Matrix< T , 3 >;
+        template < typename T >
+        using mat4 = Matrix< T , 4 >;
+
+        using vec2f = vec2< float >;
+        using vec3f = vec3< float >;
+        using vec4f = vec4< float >;
+        using mat2f = mat2< float >;
+        using mat3f = mat3< float >;
+        using mat4f = mat4< float >;
+
         template < typename CRTP >
         struct Expression;
         template < typename CRTP >
