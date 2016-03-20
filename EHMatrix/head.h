@@ -44,7 +44,8 @@ namespace EH
 
             template < typename ... Ts ,
                        typename = typename std::enable_if<
-                           EH::static_sequence< IndexType , matrix_size< Ts >::value ... >::sum() == M*N
+                           EH::static_sequence< IndexType , matrix_size< Ts >::value ... >::sum() == M*N &&
+                           sizeof...( Ts ) >= 1
                         >::type >
             constexpr Matrix( Ts&& ... args )
             {
@@ -54,7 +55,8 @@ namespace EH
             template < typename ... Ts , typename = void ,
                        typename = typename std::enable_if<
                            M == N &&
-                           EH::static_sequence< IndexType , matrix_size< Ts >::value ... >::sum() == M
+                           EH::static_sequence< IndexType , matrix_size< Ts >::value ... >::sum() == M &&
+                           sizeof...( Ts ) >= 1
                         >::type >
             constexpr Matrix( Ts&& ... args )
             {
@@ -129,14 +131,8 @@ namespace EH
 
 
         template < typename TA , typename TB , typename = void >
-        typename std::enable_if<
-            is_expression< TA >::value && is_expression< TB >::value &&
-            is_column_vector< TA >::value && is_column_vector< TB >::value &&
-            vector_size< TA >::value == 2 && vector_size< TB >::value == 2 ,
-            typename expression_traits< TA , TB >::result_type
-        >::type
-        Cross( TA&& v1 ,
-               TB&& v2 )
+        auto Cross( Vector< TA , 2 >& v1 ,
+                    Vector< TB , 2 >& v2 )
         {
             return GetBy( v1 , 0 , 0 )*GetBy( v2 , 0 , 1 ) - GetBy( v1 , 0 , 1 )*GetBy( v2 , 0 , 0 );
         }
@@ -225,6 +221,22 @@ namespace EH
             return Matrix< result_type , 2 , 2 >
             {
                 d*GetBy( temp , 1 , 1 ) , -d*GetBy( temp , 0 , 1 ) , -d*GetBy( temp , 1 , 0 ) , d*GetBy( temp , 0 , 0 )
+            };
+        }
+        template < typename TA >
+        auto Inverse( const Matrix< TA , 3 , 3 >& e1 )
+        {
+            const Vector< TA , 3 > c12 = Cross( e1.Column( 1 ) , e1.Column( 2 ) );
+            const Vector< TA , 3 > c20 = Cross( e1.Column( 2 ) , e1.Column( 0 ) );
+            const Vector< TA , 3 > c01 = Cross( e1.Column( 0 ) , e1.Column( 1 ) );
+            TA det = e1.Column( 0 ).Transpose() * c12;
+
+            TA detI = TA( 1 ) / det;
+            return Matrix< TA , 3 , 3 >
+            {
+                detI * c12.Transpose() ,
+                detI * c20.Transpose() ,
+                detI * c01.Transpose()
             };
         }
 
@@ -334,10 +346,10 @@ namespace EH
             return val;
         }
         template < typename T >
-        inline auto 
+        inline auto
         clamp( const Expression< T >& e1 , typename expression_traits< T >::result_type min , typename expression_traits< T >::result_type max )
         {
-            return Expressions::make_unary( e1 , 
+            return Expressions::make_unary( e1 ,
                     [ min , max ]( auto x )
                     {
                         return clamp( x , min , max );
@@ -345,10 +357,10 @@ namespace EH
                 );
         }
         template < typename T >
-        inline auto 
+        inline auto
         cycle( const Expression< T >& e1 , typename expression_traits< T >::result_type min , typename expression_traits< T >::result_type max )
         {
-            return Expressions::make_unary( e1 , 
+            return Expressions::make_unary( e1 ,
                     [ min , max ]( auto x )
                     {
                         return cycle( x , min , max );

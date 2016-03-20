@@ -10,6 +10,7 @@
 
 #include "EHMatrix/utils.h"
 #include "EHMatrix/aabb.h"
+#include "EHMatrix/iterator.h"
 
 
 #undef _ehm_inline

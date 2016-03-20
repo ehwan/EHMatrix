@@ -35,15 +35,15 @@ namespace EH
             }
             template < IndexType OutN = 0 ,
                        typename TA , typename TB , typename TC , typename TD ,
-                       IndexType N = expression_traits< TA >::rows >
-            auto OrthologMatrix( const expression_size_type< TA , N , 1 >& frommin ,
-                                 const expression_size_type< TB , N , 1 >& frommax ,
-                                 const expression_size_type< TC , N , 1 >& tomin ,
-                                 const expression_size_type< TD , N , 1 >& tomax )
+                       IndexType N >
+            auto OrthologMatrix( const Vector< TA , N >& frommin ,
+                                 const Vector< TB , N >& frommax ,
+                                 const Vector< TC , N >& tomin ,
+                                 const Vector< TD , N >& tomax )
             {
                 // y = ( x - from_a ) * ( to_b - to_a )/( from_b - from_a ) + to_a;
-                const auto coeff = ( tomax - tomin ) / ( frommax - frommin );
-                const auto offset = tomin - coeff * frommin;
+                auto coeff = ( tomax - tomin ) / ( frommax - frommin );
+                auto offset = tomin - coeff * frommin;
 
                 // now, y = x * coeff + offset;
                 return FirstOrderMatrix< OutN >( coeff , offset );

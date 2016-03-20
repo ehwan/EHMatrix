@@ -45,7 +45,9 @@ namespace EH
             _ehm_inline
             make_unary( const Expression< TA >& exp , FUNC&& func )
             {
-                return Unary< TA , FUNC , OPADD >
+                return Unary< TA ,
+                              typename std::remove_reference< FUNC >::type ,
+                              OPADD >
                                 ( exp , std::forward< FUNC >( func ) );
             }
             template < typename TA , typename TB , typename FUNC , int OPADD >
@@ -85,7 +87,9 @@ namespace EH
             _ehm_inline
             make_binary( const Expression< TA >& exp1 , const Expression< TB >& exp2 , FUNC&& func )
             {
-                return Binary< TA , TB , FUNC , OPADD >
+                return Binary< TA , TB ,
+                               typename std::remove_reference< FUNC >::type ,
+                               OPADD >
                                    ( exp1 , exp2 , std::forward< FUNC >( func ) );
             }
             template < typename TA , bool SINGLE , bool RESTRICT , int OPADD , IndexType M , IndexType N , typename FUNC >
@@ -133,7 +137,8 @@ namespace EH
             template < bool SINGLE , bool RESTRICT , IndexType M , IndexType N , int OPADD=1 , typename FUNC , typename TA >
             auto make_index_filter( Expression< TA >& exp , FUNC&& func )
             {
-                return IndexFilter< TA , SINGLE , RESTRICT , OPADD , M , N , FUNC >( exp , std::forward< FUNC >( func ) );
+                return IndexFilter< TA , SINGLE , RESTRICT , OPADD , M , N ,
+                                    typename std::remove_reference< FUNC >::type >( exp , std::forward< FUNC >( func ) );
             }
         };  // namespace Expressions
 

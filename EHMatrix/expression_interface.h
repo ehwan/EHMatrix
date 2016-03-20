@@ -682,6 +682,7 @@ namespace EH
                 Diagonal() = exp;
                 return *this;
             }
+
             template < typename SFINE = CRTP >
             typename std::enable_if<
                 is_square< SFINE >::value ,
@@ -737,6 +738,22 @@ namespace EH
                 Diagonal() += exp;
                 return *this;
             }
+            /*
+            template < typename Container , typename = decltype( std::begin( std::declval< Container >() ) ) >
+            inline CRTP&
+            operator += ( Container&& container )
+            {
+                LOG( "container plus" );
+                Foreach( std::begin( std::forward< Container >( container ) ) , std::end( std::forward< Container >( container ) ) ,
+                        []( auto& a , auto b )
+                        {
+                            a += b;
+                        }
+                    );
+
+                return *this;
+            }
+            */
             template < typename SFINE = CRTP >
             typename std::enable_if<
                 is_square< SFINE >::value ,
